@@ -127,9 +127,19 @@ async function generatePDF(url: string, outputPath: string, options: any = {}): 
           break-inside: avoid;
           page-break-inside: avoid;
           height: auto;
+          min-height: 400px;
           margin-bottom: 24px;
           box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
           border: 1px solid #e0e0e0;
+          padding-bottom: 70px;
+          position: relative;
+        }
+        
+        .product-price {
+          position: absolute !important;
+          bottom: 15px !important;
+          left: 15px !important;
+          right: 15px !important;
         }
         
         .product-title {

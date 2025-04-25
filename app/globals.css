@@ -69,10 +69,13 @@ body {
 .product-card {
   display: flex;
   flex-direction: column;
-  height: 450px; /* Fixed total height */
+  height: auto; /* Changed from fixed height to auto */
+  min-height: 450px; /* Added min-height instead of fixed height */
   transition: transform 0.2s, box-shadow 0.2s;
   border: 1px solid #e0e0e0;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  position: relative; /* Added position relative */
+  padding-bottom: 70px; /* Added padding at bottom to make room for price */
 }
 
 .product-card:hover {
@@ -143,12 +146,15 @@ body {
   text-align: center !important;
   padding: 0.75rem !important;
   border-radius: 0.375rem !important;
-  margin-top: auto !important;
   height: 50px !important; /* Fixed height for price */
   display: flex !important;
   flex-direction: column !important;
   justify-content: center !important;
   align-items: center !important;
+  position: absolute !important; /* Position absolute */
+  bottom: 15px !important; /* Position from bottom */
+  left: 15px !important; /* Position from left */
+  right: 15px !important; /* Position from right */
 }
 
 .product-price span {
@@ -286,9 +292,12 @@ body {
     break-inside: avoid;
     page-break-inside: avoid;
     height: auto;
+    min-height: 400px;
     margin-bottom: 24px;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     border: 1px solid #e0e0e0;
+    padding-bottom: 70px;
+    position: relative;
   }
 
   .product-title {
@@ -310,6 +319,10 @@ body {
 
   .product-price {
     height: auto !important;
+    position: absolute !important;
+    bottom: 15px !important;
+    left: 15px !important;
+    right: 15px !important;
   }
 
   .product-image img {

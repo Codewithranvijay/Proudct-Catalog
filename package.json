@@ -62,10 +62,11 @@
     "@tailwindcss/typography": "latest",
     "framer-motion": "latest",
     "jspdf": "latest",
-    "puppeteer": "latest",
-    "fs": "latest",
     "path": "latest",
-    "os": "latest"
+    "fs": "latest",
+    "os": "latest",
+    "puppeteer": "latest",
+    "url": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",

@@ -1,30 +1,61 @@
-# Catologue website rebuild
+# Product Catalog with PDF Export
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+This project implements a product catalog with advanced PDF export capabilities.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/ranvijay3325778-gmailcoms-projects/v0-catologue-website-rebuild)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/ikxyU1ffXjc)
+## Features
 
-## Overview
+- Occasion filter that pulls values from column B in the Google Sheet
+- Pixel-perfect PDF generation using Puppeteer
+- Proper page flow with a dedicated first page
+- Two product cards per A4 portrait page
+- Proper rendering of the Indian Rupee symbol
+- Responsive design with appropriate product title heights
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+## Verifying PDF Features
 
-## Deployment
+To verify all the PDF features are working correctly:
 
-Your project is live at:
+1. Start the development server:
+   \`\`\`
+   npm run dev
+   \`\`\`
 
-**[https://vercel.com/ranvijay3325778-gmailcoms-projects/v0-catologue-website-rebuild](https://vercel.com/ranvijay3325778-gmailcoms-projects/v0-catologue-website-rebuild)**
+2. In a separate terminal, run the verification script:
+   \`\`\`
+   npm run verify-pdf
+   \`\`\`
 
-## Build your app
+3. Check the generated files:
+   - `verification_pdf.pdf`: The full PDF with all features
+   - `verification_screenshot.png`: A screenshot of the first page
 
-Continue building your app on:
+## PDF Generation
 
-**[https://v0.dev/chat/projects/ikxyU1ffXjc](https://v0.dev/chat/projects/ikxyU1ffXjc)**
+The PDF generation process:
 
-## How It Works
+1. Uses Puppeteer to capture the page with current filters
+2. Embeds Noto Sans font for proper Rupee symbol rendering
+3. Applies custom print styles for perfect layout
+4. Compresses images larger than 200KB to keep file size under 10MB
+5. Ensures exactly 2 product cards per page with proper spacing
 
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+## Manual PDF Generation
+
+To manually generate a PDF:
+
+1. Start the development server:
+   \`\`\`
+   npm run dev
+   \`\`\`
+
+2. Navigate to http://localhost:3000 in your browser
+3. Apply any desired filters
+4. Click the "Download PDF" button
+
+Alternatively, use the command line:
+
+\`\`\`
+npm run generate-pdf
+\`\`\`
+
+This will generate a PDF with default settings.
