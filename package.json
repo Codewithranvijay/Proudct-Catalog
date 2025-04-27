@@ -60,13 +60,13 @@
     "zod": "^3.24.1",
     "@emotion/is-prop-valid": "latest",
     "@tailwindcss/typography": "latest",
-    "framer-motion": "latest",
-    "jspdf": "latest",
     "path": "latest",
     "fs": "latest",
     "os": "latest",
     "puppeteer": "latest",
-    "url": "latest"
+    "url": "latest",
+    "jspdf": "latest",
+    "framer-motion": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",

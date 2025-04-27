@@ -53,6 +53,7 @@ export async function generateProductCatalogPDF(
   themes: string[],
   occasions: string[],
   priceRange: [number, number],
+  discount = 0,
 ): Promise<Blob> {
   try {
     // Create a new jsPDF instance
@@ -119,17 +120,22 @@ export async function generateProductCatalogPDF(
     // Price range - using "Rs." instead of the Unicode Rupee symbol to avoid font issues
     pdf.text(`Price Range: Rs.${priceRange[0]} - Rs.${priceRange[1]}`, margin, margin + 150)
 
+    // Discount information if applicable
+    if (discount > 0) {
+      pdf.text(`Discount Applied: ${discount}%`, margin, margin + 165)
+    }
+
     // Process products - 2 products per page
     for (let i = 0; i < products.length; i += 2) {
       // Add a new page for each pair of products
       pdf.addPage()
 
       // First product on the page
-      await addProductToPage(pdf, products[i], margin, margin, contentWidth)
+      await addProductToPage(pdf, products[i], margin, margin, contentWidth, discount)
 
       // Second product on the page (if available)
       if (i + 1 < products.length) {
-        await addProductToPage(pdf, products[i + 1], margin, pageHeight / 2 + 10, contentWidth)
+        await addProductToPage(pdf, products[i + 1], margin, pageHeight / 2 + 10, contentWidth, discount)
       }
     }
 
@@ -142,7 +148,14 @@ export async function generateProductCatalogPDF(
 }
 
 // Helper function to add a product to the PDF
-async function addProductToPage(pdf: jsPDF, product: Product, startX: number, startY: number, width: number) {
+async function addProductToPage(
+  pdf: jsPDF,
+  product: Product,
+  startX: number,
+  startY: number,
+  width: number,
+  discount = 0,
+) {
   const cardPadding = 10 // Card padding in mm
   const cardWidth = width
   const cardHeight = 120 // Card height in mm
@@ -226,13 +239,24 @@ async function addProductToPage(pdf: jsPDF, product: Product, startX: number, st
   pdf.setFillColor(255, 251, 235)
   pdf.roundedRect(priceBoxX, priceBoxY, priceBoxWidth, priceBoxHeight, 2, 2, "F")
 
+  // Calculate original and discounted price
+  const originalPrice = Number.parseFloat(product.rate) || 0
+  const discountedPrice = discount > 0 ? originalPrice - (originalPrice * discount) / 100 : null
+
   // Add price text with "Rs." instead of Unicode Rupee symbol to avoid font issues
   pdf.setFontSize(12)
   pdf.setFont("helvetica", "bold")
   pdf.setTextColor(146, 64, 14) // Brown text color
-  const priceText = `Rs.${Number.parseFloat(product.rate).toFixed(2) || "0.00"}`
-  const priceTextWidth = pdf.getTextWidth(priceText)
-  pdf.text(priceText, priceBoxX + (priceBoxWidth - priceTextWidth) / 2, priceBoxY + 8)
+
+  if (discountedPrice !== null) {
+    const priceText = `Rs.${discountedPrice.toFixed(2)} (${discount}% off)`
+    const priceTextWidth = pdf.getTextWidth(priceText)
+    pdf.text(priceText, priceBoxX + (priceBoxWidth - priceTextWidth) / 2, priceBoxY + 8)
+  } else {
+    const priceText = `Rs.${originalPrice.toFixed(2) || "0.00"}`
+    const priceTextWidth = pdf.getTextWidth(priceText)
+    pdf.text(priceText, priceBoxX + (priceBoxWidth - priceTextWidth) / 2, priceBoxY + 8)
+  }
 
   // Add GST text
   pdf.setFontSize(8)

@@ -15,6 +15,7 @@ interface ProductTableProps {
   clientName?: string
   onDownloadPDF: () => void
   pdfLoading: boolean
+  discount: number
 }
 
 export function ProductTable({
@@ -25,12 +26,23 @@ export function ProductTable({
   clientName,
   onDownloadPDF,
   pdfLoading,
+  discount,
 }: ProductTableProps) {
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null)
   const isMobile = useMobile()
 
   const toggleSort = () => {
     onSortChange(sortOrder === "asc" ? "desc" : "asc")
+  }
+
+  // Function to calculate discounted price
+  const calculateDiscountedPrice = (price: string): { original: number; discounted: number | null } => {
+    const originalPrice = Number.parseFloat(price) || 0
+    if (discount <= 0) return { original: originalPrice, discounted: null }
+
+    const discountAmount = originalPrice * (discount / 100)
+    const discountedPrice = originalPrice - discountAmount
+    return { original: originalPrice, discounted: discountedPrice }
   }
 
   if (loading) {
@@ -69,85 +81,102 @@ export function ProductTable({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {products.map((product, index) => (
-          <div key={index} className="rounded-lg border bg-card shadow product-card">
-            <div className="p-4">
-              <h3 className="text-lg font-semibold product-title">{product.productName || "N/A"}</h3>
+        {products.map((product, index) => {
+          const priceInfo = calculateDiscountedPrice(product.rate)
 
-              <div className="text-sm text-muted-foreground product-meta">
-                <span className="font-medium">Category:</span> {product.productCategory || "N/A"}
-                <span className="mx-2">•</span>
-                <span className="font-medium">Theme:</span> {product.theme || "N/A"}
-                {product.occasion && (
-                  <>
-                    <span className="mx-2">•</span>
-                    <span className="font-medium">Occasion:</span> {product.occasion}
-                  </>
-                )}
-              </div>
+          return (
+            <div key={index} className="rounded-lg border bg-card shadow product-card">
+              <div className="p-4">
+                <h3 className="text-lg font-semibold product-title">{product.productName || "N/A"}</h3>
 
-              <div className="flex justify-center my-3 product-image">
-                <div className="relative group w-full">
-                  <img
-                    src={product.image || "/placeholder.svg?height=200&width=300"}
-                    alt={product.productName || "Product"}
-                    className="h-[180px] w-full rounded-md border bg-background p-2 object-contain transition-transform hover:scale-105"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement
-                      target.src = "/placeholder.svg?height=200&width=300"
-                    }}
-                    crossOrigin="anonymous"
+                <div className="text-sm text-muted-foreground product-meta">
+                  <span className="font-medium">Category:</span> {product.productCategory || "N/A"}
+                  <span className="mx-2">•</span>
+                  <span className="font-medium">Theme:</span> {product.theme || "N/A"}
+                  {product.occasion && (
+                    <>
+                      <span className="mx-2">•</span>
+                      <span className="font-medium">Occasion:</span> {product.occasion}
+                    </>
+                  )}
+                </div>
+
+                <div className="flex justify-center my-3 product-image">
+                  <div className="relative group w-full">
+                    <img
+                      src={product.image || "/placeholder.svg?height=200&width=300"}
+                      alt={product.productName || "Product"}
+                      className="h-[180px] w-full rounded-md border bg-background p-2 object-contain transition-transform hover:scale-105"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement
+                        target.src = "/placeholder.svg?height=200&width=300"
+                      }}
+                      crossOrigin="anonymous"
+                    />
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="absolute bottom-2 right-2 h-8 w-8 rounded-full bg-white/90 opacity-70 group-hover:opacity-100 transition-opacity no-print"
+                        >
+                          <Maximize2 className="h-4 w-4" />
+                          <span className="sr-only">Enlarge image</span>
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-3xl">
+                        <DialogTitle>{product.productName || "Product Image"}</DialogTitle>
+                        <div className="flex justify-center p-4">
+                          <img
+                            src={product.image || "/placeholder.svg?height=600&width=600"}
+                            alt={product.productName || "Product"}
+                            className="max-h-[70vh] object-contain"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement
+                              target.src = "/placeholder.svg?height=600&width=600"
+                            }}
+                            crossOrigin="anonymous"
+                          />
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                </div>
+
+                <div className="mb-3 product-description-container">
+                  <h4 className="font-medium mb-1">Description:</h4>
+                  <div
+                    className="prose-sm product-description text-sm"
+                    dangerouslySetInnerHTML={{ __html: product.description || "No description available" }}
                   />
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="absolute bottom-2 right-2 h-8 w-8 rounded-full bg-white/90 opacity-70 group-hover:opacity-100 transition-opacity no-print"
-                      >
-                        <Maximize2 className="h-4 w-4" />
-                        <span className="sr-only">Enlarge image</span>
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-3xl">
-                      <DialogTitle>{product.productName || "Product Image"}</DialogTitle>
-                      <div className="flex justify-center p-4">
-                        <img
-                          src={product.image || "/placeholder.svg?height=600&width=600"}
-                          alt={product.productName || "Product"}
-                          className="max-h-[70vh] object-contain"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement
-                            target.src = "/placeholder.svg?height=600&width=600"
-                          }}
-                          crossOrigin="anonymous"
-                        />
+                </div>
+
+                <div
+                  className={cn(
+                    "rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-center font-medium product-price",
+                    "transition-transform hover:scale-105 price-cell",
+                    priceInfo.discounted ? "discount-applied" : "",
+                  )}
+                >
+                  {priceInfo.discounted ? (
+                    <>
+                      <div className="flex items-center justify-center gap-2">
+                        <span className="line-through text-gray-500">₹{priceInfo.original.toFixed(2)}</span>
+                        <span className="text-green-600">₹{priceInfo.discounted.toFixed(2)}</span>
                       </div>
-                    </DialogContent>
-                  </Dialog>
+                      <span className="block text-xs text-green-600">{discount}% Discount Applied + GST</span>
+                    </>
+                  ) : (
+                    <>
+                      ₹{priceInfo.original.toFixed(2)}
+                      <span className="block text-xs text-muted-foreground">+ GST</span>
+                    </>
+                  )}
                 </div>
               </div>
-
-              <div className="mb-3 product-description-container">
-                <h4 className="font-medium mb-1">Description:</h4>
-                <div
-                  className="prose-sm product-description text-sm"
-                  dangerouslySetInnerHTML={{ __html: product.description || "No description available" }}
-                />
-              </div>
-
-              <div
-                className={cn(
-                  "rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-center font-medium product-price",
-                  "transition-transform hover:scale-105 price-cell",
-                )}
-              >
-                ₹{Number.parseFloat(product.rate).toFixed(2) || "0.00"}
-                <span className="block text-xs text-muted-foreground">+ GST</span>
-              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

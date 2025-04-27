@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
-import { Download, X, Loader2 } from "lucide-react"
+import { Download, X, Loader2, Search, Percent } from "lucide-react"
 import Image from "next/image"
 import { ProductTable } from "./product-table"
 import { PriceFilter } from "./price-filter"
@@ -16,6 +16,9 @@ import type { Product } from "@/lib/types"
 import { useMobile } from "@/hooks/use-mobile"
 import { generateProductCatalogPDF } from "@/lib/pdf-generator"
 import { motion, AnimatePresence } from "framer-motion"
+import { Slider } from "@/components/ui/slider"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 export default function Catalog() {
   const { toast } = useToast()
@@ -31,10 +34,14 @@ export default function Catalog() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedThemes, setSelectedThemes] = useState<string[]>([])
   const [selectedOccasions, setSelectedOccasions] = useState<string[]>([])
+  const [productNameSearch, setProductNameSearch] = useState("")
+  const [discount, setDiscount] = useState(0)
   const [clientName, setClientName] = useState("")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
   const [showIntro, setShowIntro] = useState(true)
   const [contentLoaded, setContentLoaded] = useState(false)
+  const [productNames, setProductNames] = useState<string[]>([])
+  const [openProductSearch, setOpenProductSearch] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
   const clientInfoRef = useRef<HTMLDivElement>(null)
@@ -63,7 +70,7 @@ export default function Catalog() {
 
   useEffect(() => {
     filterProducts()
-  }, [products, selectedCategories, selectedThemes, selectedOccasions, priceRange, sortOrder])
+  }, [products, selectedCategories, selectedThemes, selectedOccasions, priceRange, sortOrder, productNameSearch])
 
   const loadProducts = async () => {
     setLoading(true)
@@ -78,10 +85,12 @@ export default function Catalog() {
       const uniqueCategories = [...new Set(data.map((p) => p.productCategory).filter(Boolean))]
       const uniqueThemes = [...new Set(data.map((p) => p.theme).filter(Boolean))]
       const uniqueOccasions = [...new Set(data.map((p) => p.occasion).filter(Boolean))]
+      const uniqueProductNames = [...new Set(data.map((p) => p.productName).filter(Boolean))]
 
       setCategories(uniqueCategories)
       setThemes(uniqueThemes)
       setOccasions(uniqueOccasions)
+      setProductNames(uniqueProductNames)
       setFilteredProducts(data)
       setContentLoaded(true)
     } catch (error) {
@@ -122,6 +131,13 @@ export default function Catalog() {
       filtered = filtered.filter((product) => selectedOccasions.includes(product.occasion))
     }
 
+    // Filter by product name search
+    if (productNameSearch) {
+      filtered = filtered.filter((product) =>
+        product.productName.toLowerCase().includes(productNameSearch.toLowerCase()),
+      )
+    }
+
     // Sort by price
     filtered.sort((a, b) => {
       const priceA = Number.parseFloat(a.rate) || 0
@@ -138,6 +154,8 @@ export default function Catalog() {
     setSelectedCategories([])
     setSelectedThemes([])
     setSelectedOccasions([])
+    setProductNameSearch("")
+    setDiscount(0)
     setSortOrder("asc")
     setClientName("") // Clear client name when resetting filters
   }
@@ -169,6 +187,7 @@ export default function Catalog() {
         selectedThemes,
         selectedOccasions,
         priceRange,
+        discount,
       )
 
       // Create a URL for the blob
@@ -210,6 +229,8 @@ export default function Catalog() {
       selectedCategories.length > 0 ||
       selectedThemes.length > 0 ||
       selectedOccasions.length > 0 ||
+      productNameSearch !== "" ||
+      discount > 0 ||
       priceRange[0] !== 0 ||
       priceRange[1] !== 5000
     )
@@ -325,7 +346,7 @@ export default function Catalog() {
                   />
                 </div>
 
-                <div className="space-y-2 col-span-1 md:col-span-2 lg:col-span-4">
+                <div className="space-y-2 col-span-1 md:col-span-2">
                   <label className="text-sm font-medium text-primary">Occasion</label>
                   <MultiSelect
                     id="occasion-filter"
@@ -336,6 +357,70 @@ export default function Catalog() {
                     placeholder="Select occasions..."
                   />
                 </div>
+
+                {/* Product Name Search */}
+                <div className="space-y-2 col-span-1 md:col-span-2">
+                  <label className="text-sm font-medium text-primary">Product Name</label>
+                  <Popover open={openProductSearch} onOpenChange={setOpenProductSearch}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={openProductSearch}
+                        className="w-full justify-between"
+                      >
+                        {productNameSearch
+                          ? productNames.find((name) => name.toLowerCase().includes(productNameSearch.toLowerCase())) ||
+                            "Search products..."
+                          : "Search products..."}
+                        <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Search product name..." className="h-9" />
+                        <CommandList>
+                          <CommandEmpty>No product found.</CommandEmpty>
+                          <CommandGroup>
+                            {productNames.map((name) => (
+                              <CommandItem
+                                key={name}
+                                value={name}
+                                onSelect={(currentValue) => {
+                                  setProductNameSearch(currentValue)
+                                  setOpenProductSearch(false)
+                                }}
+                              >
+                                {name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Discount Selector */}
+                <div className="space-y-2 col-span-1 md:col-span-2 lg:col-span-4">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-primary">Discount (%)</label>
+                    <span className="text-sm font-medium text-primary">{discount}%</span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Slider
+                      value={[discount]}
+                      min={0}
+                      max={10}
+                      step={1}
+                      onValueChange={(value) => setDiscount(value[0])}
+                      className="flex-1"
+                    />
+                    <div className="flex h-9 w-9 items-center justify-center rounded-md border bg-background">
+                      <Percent className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </div>
+                </div>
               </div>
             </Card>
           </section>
@@ -345,11 +430,23 @@ export default function Catalog() {
 
             {areFiltersActive() && (
               <div className="mb-6 flex items-center justify-between rounded-lg border bg-background p-3 shadow-sm">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Showing products with price range:</span>
-                  <span className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
-                    ₹{priceRange[0]} - ₹{priceRange[1]}
-                  </span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Active filters:</span>
+                  {priceRange[0] !== 0 || priceRange[1] !== 5000 ? (
+                    <span className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
+                      ₹{priceRange[0]} - ₹{priceRange[1]}
+                    </span>
+                  ) : null}
+                  {discount > 0 ? (
+                    <span className="rounded-full bg-green-500 px-3 py-1 text-xs font-medium text-white">
+                      {discount}% Discount
+                    </span>
+                  ) : null}
+                  {productNameSearch ? (
+                    <span className="rounded-full bg-blue-500 px-3 py-1 text-xs font-medium text-white">
+                      "{productNameSearch}"
+                    </span>
+                  ) : null}
                 </div>
                 <Button variant="outline" size="sm" onClick={resetFilters} className="text-sm">
                   <X className="mr-1 h-3 w-3" />
@@ -367,6 +464,7 @@ export default function Catalog() {
             clientName={clientName}
             onDownloadPDF={handleDownloadPDF}
             pdfLoading={pdfLoading}
+            discount={discount}
           />
         </main>
 
