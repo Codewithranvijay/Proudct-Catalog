@@ -1,61 +1,66 @@
-# Product Catalog with PDF Export
+# Product Catalog with Login System
 
-This project implements a product catalog with advanced PDF export capabilities.
+This project implements a product catalog with a login system that authenticates against a Google Sheet.
 
 ## Features
 
-- Occasion filter that pulls values from column B in the Google Sheet
-- Pixel-perfect PDF generation using Puppeteer
-- Proper page flow with a dedicated first page
-- Two product cards per A4 portrait page
-- Proper rendering of the Indian Rupee symbol
-- Responsive design with appropriate product title heights
+- Login system with email and password authentication
+- Credentials verification against a Google Sheet
+- Login attempt logging
+- Session management with cookies
+- Protected routes with middleware
+- Product catalog with filtering and search
+- PDF export functionality
+- Responsive design
 
-## Verifying PDF Features
+## Google Sheet Setup
 
-To verify all the PDF features are working correctly:
+The application requires a Google Sheet with the following tabs:
 
-1. Start the development server:
+1. **login** tab:
+   - Column A: Email addresses
+   - Column B: Passwords
+
+2. **log** tab (for logging login attempts):
+   - Column A: Timestamp
+   - Column B: Email
+   - Column C: Status (Success/Failed)
+   - Column D: Message
+   - Column E: IP Address
+
+3. **STANDARD** tab (for product data):
+   - Contains product information as per the existing implementation
+
+## Running the Application
+
+1. Install dependencies:
+   \`\`\`
+   npm install
+   \`\`\`
+
+2. Start the development server:
    \`\`\`
    npm run dev
    \`\`\`
 
-2. In a separate terminal, run the verification script:
+3. Open your browser and navigate to:
    \`\`\`
-   npm run verify-pdf
-   \`\`\`
-
-3. Check the generated files:
-   - `verification_pdf.pdf`: The full PDF with all features
-   - `verification_screenshot.png`: A screenshot of the first page
-
-## PDF Generation
-
-The PDF generation process:
-
-1. Uses Puppeteer to capture the page with current filters
-2. Embeds Noto Sans font for proper Rupee symbol rendering
-3. Applies custom print styles for perfect layout
-4. Compresses images larger than 200KB to keep file size under 10MB
-5. Ensures exactly 2 product cards per page with proper spacing
-
-## Manual PDF Generation
-
-To manually generate a PDF:
-
-1. Start the development server:
-   \`\`\`
-   npm run dev
+   http://localhost:3000
    \`\`\`
 
-2. Navigate to http://localhost:3000 in your browser
-3. Apply any desired filters
-4. Click the "Download PDF" button
+4. You will be redirected to the login page. Enter credentials that match those in the "login" tab of your Google Sheet.
 
-Alternatively, use the command line:
+## Authentication Flow
 
-\`\`\`
-npm run generate-pdf
-\`\`\`
+1. User enters email and password on the login page
+2. Credentials are verified against the "login" tab in the Google Sheet
+3. Login attempt is logged in the "log" tab
+4. On successful login, a session cookie is set
+5. User is redirected to the product catalog
+6. The middleware protects routes from unauthorized access
 
-This will generate a PDF with default settings.
+## Customization
+
+- Update the spreadsheet ID in the API routes to match your Google Sheet
+- Modify the login page design as needed
+- Adjust the session expiration time in the login API route

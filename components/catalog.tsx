@@ -19,8 +19,13 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Slider } from "@/components/ui/slider"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { UserMenu } from "./user-menu"
 
-export default function Catalog() {
+interface CatalogProps {
+  userEmail: string
+}
+
+export default function Catalog({ userEmail }: CatalogProps) {
   const { toast } = useToast()
   const isMobile = useMobile()
   const [loading, setLoading] = useState(false)
@@ -280,7 +285,7 @@ export default function Catalog() {
         <header className="sticky top-0 z-10 border-b bg-background print-header" ref={headerRef}>
           <div className="container flex items-center justify-between py-4">
             <div className="flex items-center gap-4">
-              <div className="relative h-12 w-36">
+              <div className="relative h-12 w-36 group">
                 <Image
                   src="https://lh3.googleusercontent.com/d/1pMIJ-KTCUVcIAinU7A88PUG550hBGia-"
                   alt="Company Logo"
@@ -292,17 +297,23 @@ export default function Catalog() {
                     target.src = "/placeholder.svg?height=48&width=144"
                   }}
                 />
+                <div className="absolute -bottom-10 left-0 z-50 hidden w-auto min-w-max rounded-md bg-white p-2 text-xs shadow-md group-hover:block">
+                  Logged in as: {userEmail}
+                </div>
               </div>
               <h1 className="text-xl font-bold text-primary md:text-2xl">Product Catalog</h1>
             </div>
-            <Button
-              onClick={handleDownloadPDF}
-              disabled={pdfLoading || filteredProducts.length === 0}
-              className="gap-2 no-print"
-            >
-              {pdfLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-              <span className={cn(isMobile ? "sr-only" : "")}>{pdfLoading ? "Generating..." : "Download PDF"}</span>
-            </Button>
+            <div className="flex items-center gap-2">
+              <UserMenu email={userEmail} />
+              <Button
+                onClick={handleDownloadPDF}
+                disabled={pdfLoading || filteredProducts.length === 0}
+                className="gap-2 no-print"
+              >
+                {pdfLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                <span className={cn(isMobile ? "sr-only" : "")}>{pdfLoading ? "Generating..." : "Download PDF"}</span>
+              </Button>
+            </div>
           </div>
         </header>
 
