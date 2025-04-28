@@ -16,10 +16,11 @@ import type { Product } from "@/lib/types"
 import { useMobile } from "@/hooks/use-mobile"
 import { generateProductCatalogPDF } from "@/lib/pdf-generator"
 import { motion, AnimatePresence } from "framer-motion"
-import { Slider } from "@/components/ui/slider"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { UserMenu } from "./user-menu"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { LoginHistory } from "./login-history"
 
 interface CatalogProps {
   userEmail: string
@@ -304,6 +305,7 @@ export default function Catalog({ userEmail }: CatalogProps) {
               <h1 className="text-xl font-bold text-primary md:text-2xl">Product Catalog</h1>
             </div>
             <div className="flex items-center gap-2">
+              <LoginHistory />
               <UserMenu email={userEmail} />
               <Button
                 onClick={handleDownloadPDF}
@@ -412,21 +414,26 @@ export default function Catalog({ userEmail }: CatalogProps) {
                   </Popover>
                 </div>
 
-                {/* Discount Selector */}
+                {/* Discount Dropdown (replacing slider) */}
                 <div className="space-y-2 col-span-1 md:col-span-2 lg:col-span-4">
-                  <div className="flex items-center justify-between">
-                    <label className="text-sm font-medium text-primary">Discount (%)</label>
-                    <span className="text-sm font-medium text-primary">{discount}%</span>
-                  </div>
+                  <label className="text-sm font-medium text-primary">Discount (%)</label>
                   <div className="flex items-center gap-4">
-                    <Slider
-                      value={[discount]}
-                      min={0}
-                      max={10}
-                      step={1}
-                      onValueChange={(value) => setDiscount(value[0])}
-                      className="flex-1"
-                    />
+                    <Select
+                      value={discount.toString()}
+                      onValueChange={(value) => setDiscount(Number.parseInt(value, 10))}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select discount" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0">No Discount (0%)</SelectItem>
+                        <SelectItem value="5">5% Discount</SelectItem>
+                        <SelectItem value="10">10% Discount</SelectItem>
+                        <SelectItem value="15">15% Discount</SelectItem>
+                        <SelectItem value="20">20% Discount</SelectItem>
+                        <SelectItem value="25">25% Discount</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <div className="flex h-9 w-9 items-center justify-center rounded-md border bg-background">
                       <Percent className="h-4 w-4 text-muted-foreground" />
                     </div>

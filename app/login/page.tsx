@@ -55,73 +55,60 @@ export default function LoginPage() {
 
       if (userRow && userRow[1] === password) {
         // Credentials match - set a session in localStorage
-        localStorage.setItem("session", JSON.stringify({ email, authenticated: true }))
+        const timestamp = new Date().toISOString()
 
-        // Log login attempt (optional)
-        try {
-          await logLoginAttempt(email, true, "Success")
-        } catch (logError) {
-          console.error("Error logging login attempt:", logError)
-          // Continue with login even if logging fails
-        }
+        // Store login info
+        localStorage.setItem(
+          "session",
+          JSON.stringify({
+            email,
+            authenticated: true,
+            loginTime: timestamp,
+          }),
+        )
+
+        // Store login history
+        const loginHistory = JSON.parse(localStorage.getItem("loginHistory") || "[]")
+        loginHistory.push({
+          timestamp,
+          email,
+          status: "Success",
+          message: "Login successful",
+        })
+        localStorage.setItem("loginHistory", JSON.stringify(loginHistory))
 
         // Redirect to catalog page on successful login
         router.push("/")
       } else {
         setError("Invalid credentials")
 
-        // Log failed login attempt (optional)
-        try {
-          await logLoginAttempt(email, false, "Invalid credentials")
-        } catch (logError) {
-          console.error("Error logging login attempt:", logError)
-        }
+        // Store failed login attempt in history
+        const timestamp = new Date().toISOString()
+        const loginHistory = JSON.parse(localStorage.getItem("loginHistory") || "[]")
+        loginHistory.push({
+          timestamp,
+          email,
+          status: "Failed",
+          message: "Invalid credentials",
+        })
+        localStorage.setItem("loginHistory", JSON.stringify(loginHistory))
       }
     } catch (error) {
       console.error("Login error:", error)
       setError("An error occurred during login. Please try again.")
+
+      // Store error in login history
+      const timestamp = new Date().toISOString()
+      const loginHistory = JSON.parse(localStorage.getItem("loginHistory") || "[]")
+      loginHistory.push({
+        timestamp,
+        email,
+        status: "Error",
+        message: "System error during login",
+      })
+      localStorage.setItem("loginHistory", JSON.stringify(loginHistory))
     } finally {
       setLoading(false)
-    }
-  }
-
-  // Function to log login attempts to Google Sheets
-  async function logLoginAttempt(email: string, success: boolean, message: string): Promise<void> {
-    try {
-      // Google Sheets API endpoint for log tab
-      const spreadsheetId = "1WnGoJIbIzytPwS54gHAP7h-ZxeBKGxnQv1OOVPZMcoE"
-      const sheetName = "log" // The tab name for logging
-      const apiKey = "AIzaSyAmvqtdeTd6j8nTeLnnCD__vHymykdASZQ"
-      const apiUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${sheetName}:append?valueInputOption=USER_ENTERED&key=${apiKey}`
-
-      // Current timestamp
-      const timestamp = new Date().toISOString()
-
-      // IP address (in a real app, you would get this from the request)
-      const ipAddress = "Unknown" // For privacy reasons, we're not capturing real IP
-
-      // Prepare the row data
-      const rowData = [timestamp, email, success ? "Success" : "Failed", message, ipAddress]
-
-      // Append the row to the Google Sheet
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          range: sheetName,
-          majorDimension: "ROWS",
-          values: [rowData],
-        }),
-      })
-
-      if (!response.ok) {
-        console.error("Failed to log login attempt:", await response.text())
-      }
-    } catch (error) {
-      console.error("Error logging login attempt:", error)
-      // Don't throw the error - logging failure shouldn't affect the login process
     }
   }
 

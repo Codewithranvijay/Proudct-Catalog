@@ -24,6 +24,17 @@ export function UserMenu({ email }: UserMenuProps) {
   const handleLogout = async () => {
     setLoading(true)
     try {
+      // Store logout in login history
+      const timestamp = new Date().toISOString()
+      const loginHistory = JSON.parse(localStorage.getItem("loginHistory") || "[]")
+      loginHistory.push({
+        timestamp,
+        email,
+        status: "Success",
+        message: "User logged out",
+      })
+      localStorage.setItem("loginHistory", JSON.stringify(loginHistory))
+
       // Clear the session from localStorage
       localStorage.removeItem("session")
 
