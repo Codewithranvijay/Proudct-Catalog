@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react"
 
 export default function Home() {
   const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
@@ -27,6 +28,7 @@ export default function Home() {
       }
 
       setUserEmail(session.email || "User")
+      setIsAdmin(session.isAdmin || false)
     } catch (error) {
       console.error("Error parsing session:", error)
       router.push("/login")
@@ -44,5 +46,5 @@ export default function Home() {
     )
   }
 
-  return <Catalog userEmail={userEmail || "User"} />
+  return <Catalog userEmail={userEmail || "User"} isAdmin={isAdmin} />
 }

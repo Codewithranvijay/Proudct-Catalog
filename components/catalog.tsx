@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useEffect, useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -19,14 +21,14 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { UserMenu } from "./user-menu"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { LoginHistory } from "./login-history"
 
 interface CatalogProps {
   userEmail: string
+  isAdmin: boolean
 }
 
-export default function Catalog({ userEmail }: CatalogProps) {
+export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
   const { toast } = useToast()
   const isMobile = useMobile()
   const [loading, setLoading] = useState(false)
@@ -164,6 +166,17 @@ export default function Catalog({ userEmail }: CatalogProps) {
     setDiscount(0)
     setSortOrder("asc")
     setClientName("") // Clear client name when resetting filters
+  }
+
+  // Handle discount input change
+  const handleDiscountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Number.parseInt(e.target.value, 10)
+    if (isNaN(value)) {
+      setDiscount(0)
+    } else {
+      // Limit discount to 0-30 range
+      setDiscount(Math.min(30, Math.max(0, value)))
+    }
   }
 
   // PDF generation method using client-side approach
@@ -305,8 +318,13 @@ export default function Catalog({ userEmail }: CatalogProps) {
               <h1 className="text-xl font-bold text-primary md:text-2xl">Product Catalog</h1>
             </div>
             <div className="flex items-center gap-2">
+              {isAdmin && (
+                <Button variant="outline" size="sm" className="gap-2" onClick={() => (window.location.href = "/admin")}>
+                  <span className={cn(isMobile ? "sr-only" : "")}>Admin Dashboard</span>
+                </Button>
+              )}
               <LoginHistory />
-              <UserMenu email={userEmail} />
+              <UserMenu email={userEmail} isAdmin={isAdmin} />
               <Button
                 onClick={handleDownloadPDF}
                 disabled={pdfLoading || filteredProducts.length === 0}
@@ -414,26 +432,19 @@ export default function Catalog({ userEmail }: CatalogProps) {
                   </Popover>
                 </div>
 
-                {/* Discount Dropdown (replacing slider) */}
+                {/* Discount Input Box (replacing dropdown) */}
                 <div className="space-y-2 col-span-1 md:col-span-2 lg:col-span-4">
                   <label className="text-sm font-medium text-primary">Discount (%)</label>
                   <div className="flex items-center gap-4">
-                    <Select
-                      value={discount.toString()}
-                      onValueChange={(value) => setDiscount(Number.parseInt(value, 10))}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select discount" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="0">No Discount (0%)</SelectItem>
-                        <SelectItem value="5">5% Discount</SelectItem>
-                        <SelectItem value="10">10% Discount</SelectItem>
-                        <SelectItem value="15">15% Discount</SelectItem>
-                        <SelectItem value="20">20% Discount</SelectItem>
-                        <SelectItem value="25">25% Discount</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Input
+                      type="number"
+                      min={0}
+                      max={30}
+                      value={discount}
+                      onChange={handleDiscountChange}
+                      className="w-full"
+                      placeholder="Enter discount percentage (0-30)"
+                    />
                     <div className="flex h-9 w-9 items-center justify-center rounded-md border bg-background">
                       <Percent className="h-4 w-4 text-muted-foreground" />
                     </div>

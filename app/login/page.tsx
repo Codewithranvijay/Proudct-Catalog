@@ -46,14 +46,18 @@ export default function LoginPage() {
 
       if (!data.values || data.values.length <= 1) {
         setError("Invalid credentials")
+        await logLoginAttempt(email, "Failed", "No user data available")
         return
       }
 
       // Check credentials against the Google Sheet
-      // Assuming column A contains emails and column B contains passwords
+      // Assuming column A contains emails, column B contains passwords, and column C contains role
       const userRow = data.values.find((row: string[]) => row[0] === email)
 
       if (userRow && userRow[1] === password) {
+        // Check if user is an admin (has "SUPREME" in column C)
+        const isAdmin = userRow[2] === "SUPREME"
+
         // Credentials match - set a session in localStorage
         const timestamp = new Date().toISOString()
 
@@ -64,6 +68,7 @@ export default function LoginPage() {
             email,
             authenticated: true,
             loginTime: timestamp,
+            isAdmin,
           }),
         )
 
@@ -76,6 +81,9 @@ export default function LoginPage() {
           message: "Login successful",
         })
         localStorage.setItem("loginHistory", JSON.stringify(loginHistory))
+
+        // Log to Google Sheets via our API route
+        await logLoginAttempt(email, "Success", "Login successful")
 
         // Redirect to catalog page on successful login
         router.push("/")
@@ -92,6 +100,9 @@ export default function LoginPage() {
           message: "Invalid credentials",
         })
         localStorage.setItem("loginHistory", JSON.stringify(loginHistory))
+
+        // Log failed attempt to Google Sheets
+        await logLoginAttempt(email, "Failed", "Invalid credentials")
       }
     } catch (error) {
       console.error("Login error:", error)
@@ -107,8 +118,35 @@ export default function LoginPage() {
         message: "System error during login",
       })
       localStorage.setItem("loginHistory", JSON.stringify(loginHistory))
+
+      // Log error to Google Sheets
+      await logLoginAttempt(email, "Error", "System error during login")
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Function to log login attempts to Google Sheets via our API route
+  async function logLoginAttempt(email: string, status: string, message: string): Promise<void> {
+    try {
+      const response = await fetch("/api/log", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          status,
+          message,
+        }),
+      })
+
+      if (!response.ok) {
+        console.error("Failed to log to Google Sheets:", await response.text())
+      }
+    } catch (error) {
+      console.error("Error logging to Google Sheets:", error)
+      // Continue even if logging fails
     }
   }
 
