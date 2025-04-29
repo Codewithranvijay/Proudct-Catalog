@@ -6,8 +6,11 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ArrowLeft, Download, Loader2, RefreshCw, Shield, User } from "lucide-react"
+import { ArrowLeft, Download, Loader2, Menu, RefreshCw, Shield, User } from "lucide-react"
 import Image from "next/image"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { cn } from "@/lib/utils"
 
 interface LoginRecord {
   timestamp: string
@@ -30,6 +33,7 @@ export default function AdminDashboard() {
   const [localLoginHistory, setLocalLoginHistory] = useState<LoginRecord[]>([])
   const [sheetLoginHistory, setSheetLoginHistory] = useState<LoginRecord[]>([])
   const [userSession, setUserSession] = useState<UserSession | null>(null)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -176,8 +180,8 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-10 border-b bg-background">
         <div className="container flex items-center justify-between py-4">
-          <div className="flex items-center gap-4">
-            <div className="relative h-12 w-36">
+          <div className="flex items-center gap-2 md:gap-4">
+            <div className="relative h-10 w-24 md:h-12 md:w-36">
               <Image
                 src="https://lh3.googleusercontent.com/d/1pMIJ-KTCUVcIAinU7A88PUG550hBGia-"
                 alt="Company Logo"
@@ -191,13 +195,42 @@ export default function AdminDashboard() {
               />
             </div>
             <div className="flex flex-col">
-              <h1 className="text-xl font-bold text-primary md:text-2xl">Admin Dashboard</h1>
-              <p className="text-sm text-muted-foreground">
-                Logged in as: {userSession?.email} <Shield className="inline h-4 w-4 text-green-500" />
+              <h1 className="text-lg font-bold text-primary md:text-2xl">Admin</h1>
+              <p className="text-xs text-muted-foreground md:text-sm">
+                {userSession?.email} <Shield className="inline h-3 w-3 md:h-4 md:w-4 text-green-500" />
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+
+          {/* Mobile menu button */}
+          <div className="flex md:hidden">
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <Menu className="h-5 w-5" />
+                  <span className="sr-only">Toggle menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[240px] sm:w-[300px]">
+                <div className="flex flex-col gap-4 py-4">
+                  <Button
+                    variant="outline"
+                    className="justify-start"
+                    onClick={() => {
+                      router.push("/")
+                      setMobileMenuOpen(false)
+                    }}
+                  >
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Catalog
+                  </Button>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+
+          {/* Desktop navigation */}
+          <div className="hidden md:flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => router.push("/")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Catalog
@@ -206,9 +239,9 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-      <main className="container py-6">
+      <main className="container py-4 md:py-6">
         <Tabs defaultValue="google-sheet-logs" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3">
             <TabsTrigger value="google-sheet-logs">Google Sheet Logs</TabsTrigger>
             <TabsTrigger value="local-logs">Local Browser Logs</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
@@ -216,17 +249,17 @@ export default function AdminDashboard() {
 
           <TabsContent value="google-sheet-logs">
             <Card>
-              <CardHeader>
-                <CardTitle>Google Sheet Login History</CardTitle>
-                <CardDescription>
+              <CardHeader className="px-4 py-4 md:px-6 md:py-6">
+                <CardTitle className="text-lg md:text-xl">Google Sheet Login History</CardTitle>
+                <CardDescription className="text-xs md:text-sm">
                   View all login attempts logged to your Google Sheet. This data is stored in the "log" tab.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-4 pb-4 md:px-6 md:pb-6">
                 <div className="flex justify-end space-x-2 mb-4">
                   <Button variant="outline" size="sm" onClick={fetchGoogleSheetLogs} disabled={fetchingSheetLogs}>
                     <RefreshCw className={`mr-2 h-4 w-4 ${fetchingSheetLogs ? "animate-spin" : ""}`} />
-                    {fetchingSheetLogs ? "Refreshing..." : "Refresh"}
+                    <span className="hidden sm:inline">{fetchingSheetLogs ? "Refreshing..." : "Refresh"}</span>
                   </Button>
                   <Button
                     variant="outline"
@@ -235,7 +268,7 @@ export default function AdminDashboard() {
                     disabled={sheetLoginHistory.length === 0}
                   >
                     <Download className="mr-2 h-4 w-4" />
-                    Export to CSV
+                    <span className="hidden sm:inline">Export</span>
                   </Button>
                 </div>
 
@@ -244,39 +277,46 @@ export default function AdminDashboard() {
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   </div>
                 ) : sheetLoginHistory.length > 0 ? (
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Time</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Message</TableHead>
-                          <TableHead>IP Address</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {sheetLoginHistory.map((record, index) => (
-                          <TableRow key={index}>
-                            <TableCell>{formatDate(record.timestamp)}</TableCell>
-                            <TableCell>{record.email}</TableCell>
-                            <TableCell>
-                              <span
-                                className={
-                                  record.status === "Success"
-                                    ? "text-green-600 font-medium"
-                                    : "text-red-600 font-medium"
-                                }
-                              >
-                                {record.status}
-                              </span>
-                            </TableCell>
-                            <TableCell>{record.message}</TableCell>
-                            <TableCell>{record.ipAddress}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                  <div className="rounded-md border overflow-hidden">
+                    <ScrollArea className="h-[400px] md:h-[500px]">
+                      <div className="w-full overflow-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-[120px] md:w-[180px]">Time</TableHead>
+                              <TableHead className="min-w-[120px]">Email</TableHead>
+                              <TableHead className="w-[80px]">Status</TableHead>
+                              <TableHead className="min-w-[120px]">Message</TableHead>
+                              <TableHead className="hidden md:table-cell">IP Address</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {sheetLoginHistory.map((record, index) => (
+                              <TableRow key={index}>
+                                <TableCell className="whitespace-nowrap text-xs md:text-sm">
+                                  {formatDate(record.timestamp)}
+                                </TableCell>
+                                <TableCell className="text-xs md:text-sm">{record.email}</TableCell>
+                                <TableCell>
+                                  <span
+                                    className={cn(
+                                      "text-xs md:text-sm font-medium",
+                                      record.status === "Success" ? "text-green-600" : "text-red-600",
+                                    )}
+                                  >
+                                    {record.status}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="text-xs md:text-sm">{record.message}</TableCell>
+                                <TableCell className="hidden md:table-cell text-xs md:text-sm">
+                                  {record.ipAddress}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </ScrollArea>
                   </div>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">
@@ -289,18 +329,18 @@ export default function AdminDashboard() {
 
           <TabsContent value="local-logs">
             <Card>
-              <CardHeader>
-                <CardTitle>Local Browser Login History</CardTitle>
-                <CardDescription>
+              <CardHeader className="px-4 py-4 md:px-6 md:py-6">
+                <CardTitle className="text-lg md:text-xl">Local Browser Login History</CardTitle>
+                <CardDescription className="text-xs md:text-sm">
                   View login attempts stored in your browser's local storage. This data is only available on this
                   device.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-4 pb-4 md:px-6 md:pb-6">
                 <div className="flex justify-end space-x-2 mb-4">
                   <Button variant="outline" size="sm" onClick={clearLocalHistory}>
                     <RefreshCw className="mr-2 h-4 w-4" />
-                    Clear History
+                    <span className="hidden sm:inline">Clear</span>
                   </Button>
                   <Button
                     variant="outline"
@@ -309,42 +349,47 @@ export default function AdminDashboard() {
                     disabled={localLoginHistory.length === 0}
                   >
                     <Download className="mr-2 h-4 w-4" />
-                    Export to CSV
+                    <span className="hidden sm:inline">Export</span>
                   </Button>
                 </div>
 
                 {localLoginHistory.length > 0 ? (
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Time</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Message</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {localLoginHistory.map((record, index) => (
-                          <TableRow key={index}>
-                            <TableCell>{formatDate(record.timestamp)}</TableCell>
-                            <TableCell>{record.email}</TableCell>
-                            <TableCell>
-                              <span
-                                className={
-                                  record.status === "Success"
-                                    ? "text-green-600 font-medium"
-                                    : "text-red-600 font-medium"
-                                }
-                              >
-                                {record.status}
-                              </span>
-                            </TableCell>
-                            <TableCell>{record.message}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                  <div className="rounded-md border overflow-hidden">
+                    <ScrollArea className="h-[400px] md:h-[500px]">
+                      <div className="w-full overflow-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-[120px] md:w-[180px]">Time</TableHead>
+                              <TableHead className="min-w-[120px]">Email</TableHead>
+                              <TableHead className="w-[80px]">Status</TableHead>
+                              <TableHead className="min-w-[120px]">Message</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {localLoginHistory.map((record, index) => (
+                              <TableRow key={index}>
+                                <TableCell className="whitespace-nowrap text-xs md:text-sm">
+                                  {formatDate(record.timestamp)}
+                                </TableCell>
+                                <TableCell className="text-xs md:text-sm">{record.email}</TableCell>
+                                <TableCell>
+                                  <span
+                                    className={cn(
+                                      "text-xs md:text-sm font-medium",
+                                      record.status === "Success" ? "text-green-600" : "text-red-600",
+                                    )}
+                                  >
+                                    {record.status}
+                                  </span>
+                                </TableCell>
+                                <TableCell className="text-xs md:text-sm">{record.message}</TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </ScrollArea>
                   </div>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground">No local login history available</div>
@@ -355,58 +400,64 @@ export default function AdminDashboard() {
 
           <TabsContent value="users">
             <Card>
-              <CardHeader>
-                <CardTitle>User Management</CardTitle>
-                <CardDescription>
+              <CardHeader className="px-4 py-4 md:px-6 md:py-6">
+                <CardTitle className="text-lg md:text-xl">User Management</CardTitle>
+                <CardDescription className="text-xs md:text-sm">
                   View and manage users from your Google Sheet. Users with "SUPREME" in column C have admin access.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="mt-6">
-                  <h3 className="font-medium mb-4">User List</h3>
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Role</TableHead>
-                          <TableHead>Last Login</TableHead>
-                          <TableHead>Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        <TableRow>
-                          <TableCell>admin@example.com</TableCell>
-                          <TableCell>
-                            <div className="flex items-center">
-                              <Shield className="mr-1 h-4 w-4 text-green-500" />
-                              SUPREME
-                            </div>
-                          </TableCell>
-                          <TableCell>{new Date().toLocaleString()}</TableCell>
-                          <TableCell>
-                            <Button variant="ghost" size="sm" disabled>
-                              Edit
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                        <TableRow>
-                          <TableCell>user@example.com</TableCell>
-                          <TableCell>
-                            <div className="flex items-center">
-                              <User className="mr-1 h-4 w-4" />
-                              Standard
-                            </div>
-                          </TableCell>
-                          <TableCell>{new Date().toLocaleString()}</TableCell>
-                          <TableCell>
-                            <Button variant="ghost" size="sm" disabled>
-                              Edit
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
+              <CardContent className="px-4 pb-4 md:px-6 md:pb-6">
+                <div className="mt-2 md:mt-6">
+                  <h3 className="font-medium mb-4 text-sm md:text-base">User List</h3>
+                  <div className="rounded-md border overflow-hidden">
+                    <div className="w-full overflow-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Role</TableHead>
+                            <TableHead className="hidden md:table-cell">Last Login</TableHead>
+                            <TableHead className="w-[80px]">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          <TableRow>
+                            <TableCell className="text-xs md:text-sm">admin@example.com</TableCell>
+                            <TableCell>
+                              <div className="flex items-center">
+                                <Shield className="mr-1 h-3 w-3 md:h-4 md:w-4 text-green-500" />
+                                <span className="text-xs md:text-sm">SUPREME</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell text-xs md:text-sm">
+                              {new Date().toLocaleString()}
+                            </TableCell>
+                            <TableCell>
+                              <Button variant="ghost" size="sm" disabled className="h-7 px-2 text-xs">
+                                Edit
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell className="text-xs md:text-sm">user@example.com</TableCell>
+                            <TableCell>
+                              <div className="flex items-center">
+                                <User className="mr-1 h-3 w-3 md:h-4 md:w-4" />
+                                <span className="text-xs md:text-sm">Standard</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell text-xs md:text-sm">
+                              {new Date().toLocaleString()}
+                            </TableCell>
+                            <TableCell>
+                              <Button variant="ghost" size="sm" disabled className="h-7 px-2 text-xs">
+                                Edit
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -415,7 +466,7 @@ export default function AdminDashboard() {
         </Tabs>
       </main>
 
-      <footer className="border-t py-6 text-center text-sm text-muted-foreground">
+      <footer className="border-t py-4 md:py-6 text-center text-xs md:text-sm text-muted-foreground">
         <p>© {new Date().getFullYear()} Admin Dashboard. All rights reserved.</p>
       </footer>
     </div>

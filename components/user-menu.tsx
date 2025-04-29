@@ -78,16 +78,16 @@ export function UserMenu({ email, isAdmin = false }: UserMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
+        <Button variant="outline" size="sm" className="h-8 px-2 md:h-9 md:px-3 gap-1 md:gap-2">
           {isAdmin ? <Shield className="h-4 w-4 text-green-500" /> : <User className="h-4 w-4" />}
           <span className="hidden md:inline">{email}</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuLabel>
+      <DropdownMenuContent align="end" className="w-48 md:w-56">
+        <DropdownMenuLabel className="text-xs md:text-sm">
           {isAdmin ? (
             <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-green-500" />
+              <Shield className="h-3 w-3 md:h-4 md:w-4 text-green-500" />
               <span>Admin Account</span>
             </div>
           ) : (
@@ -95,14 +95,16 @@ export function UserMenu({ email, isAdmin = false }: UserMenuProps) {
           )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {isAdmin && (
-          <DropdownMenuItem onClick={() => router.push("/admin")}>
-            <Shield className="mr-2 h-4 w-4" />
-            <span>Admin Dashboard</span>
-          </DropdownMenuItem>
-        )}
-        <DropdownMenuItem onClick={handleLogout} disabled={loading}>
-          <LogOut className="mr-2 h-4 w-4" />
+        <DropdownMenuItem
+          className="text-xs md:text-sm cursor-pointer"
+          onClick={() => router.push("/admin")}
+          disabled={!isAdmin}
+        >
+          <Shield className="mr-2 h-3 w-3 md:h-4 md:w-4" />
+          <span>Admin Dashboard</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem className="text-xs md:text-sm cursor-pointer" onClick={handleLogout} disabled={loading}>
+          <LogOut className="mr-2 h-3 w-3 md:h-4 md:w-4" />
           <span>{loading ? "Logging out..." : "Logout"}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
