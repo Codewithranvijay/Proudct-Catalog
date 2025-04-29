@@ -153,9 +153,9 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center p-4 md:p-6">
-          <div className="flex justify-center mb-2 md:mb-4">
-            <div className="relative h-12 w-36 md:h-16 md:w-48">
+        <CardHeader className="space-y-1 text-center">
+          <div className="flex justify-center mb-4">
+            <div className="relative h-16 w-48">
               <Image
                 src="https://lh3.googleusercontent.com/d/1pMIJ-KTCUVcIAinU7A88PUG550hBGia-"
                 alt="Company Logo"
@@ -164,23 +164,19 @@ export default function LoginPage() {
                 className="object-contain"
                 priority
                 onError={(e) => {
-                  const imgTarget = e.target as HTMLImageElement
-                  imgTarget.src = "/placeholder.svg?height=64&width=192"
+                  const target = e.target as HTMLImageElement
+                  target.src = "/placeholder.svg?height=64&width=192"
                 }}
               />
             </div>
           </div>
-          <CardTitle className="text-xl md:text-2xl font-bold">Login</CardTitle>
-          <CardDescription className="text-xs md:text-sm">
-            Enter your credentials to access the product catalog
-          </CardDescription>
+          <CardTitle className="text-2xl font-bold">Login</CardTitle>
+          <CardDescription>Enter your credentials to access the product catalog</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-3 md:space-y-4 px-4 md:px-6">
-            <div className="space-y-1 md:space-y-2">
-              <Label htmlFor="email" className="text-sm">
-                Email
-              </Label>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -188,26 +184,22 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="h-9 md:h-10"
               />
             </div>
-            <div className="space-y-1 md:space-y-2">
-              <Label htmlFor="password" className="text-sm">
-                Password
-              </Label>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="h-9 md:h-10"
               />
             </div>
-            {error && <div className="p-2 md:p-3 text-xs md:text-sm text-red-500 bg-red-50 rounded-md">{error}</div>}
+            {error && <div className="p-3 text-sm text-red-500 bg-red-50 rounded-md">{error}</div>}
           </CardContent>
-          <CardFooter className="px-4 pb-4 md:px-6 md:pb-6">
-            <Button type="submit" className="w-full h-9 md:h-10" disabled={loading}>
+          <CardFooter>
+            <Button type="submit" className="w-full" disabled={loading}>
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
