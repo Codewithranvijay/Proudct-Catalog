@@ -276,42 +276,14 @@ export default function AdminDashboard() {
 
       <main className="container py-3 md:py-6">
         <Tabs defaultValue="google-sheet-logs" value={activeTab} onValueChange={setActiveTab} className="w-full">
-          {/* Mobile tabs - stacked vertically */}
-          <div className="md:hidden mb-4">
-            <div className="flex flex-col space-y-2">
-              <Button
-                variant={activeTab === "google-sheet-logs" ? "default" : "outline"}
-                className="w-full justify-start"
-                onClick={() => setActiveTab("google-sheet-logs")}
-              >
-                Google Sheet Logs
-              </Button>
-              <Button
-                variant={activeTab === "local-logs" ? "default" : "outline"}
-                className="w-full justify-start"
-                onClick={() => setActiveTab("local-logs")}
-              >
-                Local Browser Logs
-              </Button>
-              <Button
-                variant={activeTab === "users" ? "default" : "outline"}
-                className="w-full justify-start"
-                onClick={() => setActiveTab("users")}
-              >
-                User Management
-              </Button>
-            </div>
-          </div>
-
-          {/* Desktop tabs - horizontal */}
-          <TabsList className="hidden md:grid w-full grid-cols-3 mb-4">
-            <TabsTrigger value="google-sheet-logs" className="text-sm">
+          <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 mb-4">
+            <TabsTrigger value="google-sheet-logs" className="text-xs md:text-sm">
               Google Sheet Logs
             </TabsTrigger>
-            <TabsTrigger value="local-logs" className="text-sm">
+            <TabsTrigger value="local-logs" className="text-xs md:text-sm">
               Local Browser Logs
             </TabsTrigger>
-            <TabsTrigger value="users" className="text-sm">
+            <TabsTrigger value="users" className="text-xs md:text-sm">
               User Management
             </TabsTrigger>
           </TabsList>
@@ -353,29 +325,27 @@ export default function AdminDashboard() {
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   </div>
                 ) : sheetLoginHistory.length > 0 ? (
-                  <div className="rounded-md border">
+                  <div className="rounded-md border overflow-hidden">
                     <ScrollArea className="h-[350px] md:h-[500px]">
-                      <div className="w-full overflow-x-auto">
+                      <div className="w-full overflow-auto">
                         <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead className="w-[100px] md:w-[180px] whitespace-nowrap">Time</TableHead>
-                              <TableHead className="min-w-[100px]">Email</TableHead>
-                              <TableHead className="w-[70px]">Status</TableHead>
-                              <TableHead className="min-w-[100px]">Message</TableHead>
+                              <TableHead className="w-[120px] md:w-[180px] whitespace-nowrap">Time</TableHead>
+                              <TableHead className="min-w-[120px]">Email</TableHead>
+                              <TableHead className="w-[80px]">Status</TableHead>
+                              <TableHead className="min-w-[120px]">Message</TableHead>
                               <TableHead className="hidden md:table-cell">IP Address</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {sheetLoginHistory.map((record, index) => (
                               <TableRow key={index}>
-                                <TableCell className="whitespace-nowrap text-xs md:text-sm py-2">
+                                <TableCell className="whitespace-nowrap text-xs md:text-sm">
                                   {formatDate(record.timestamp)}
                                 </TableCell>
-                                <TableCell className="text-xs md:text-sm py-2 truncate max-w-[120px]">
-                                  {record.email}
-                                </TableCell>
-                                <TableCell className="py-2">
+                                <TableCell className="text-xs md:text-sm">{record.email}</TableCell>
+                                <TableCell>
                                   <span
                                     className={cn(
                                       "text-xs md:text-sm font-medium",
@@ -385,10 +355,8 @@ export default function AdminDashboard() {
                                     {record.status}
                                   </span>
                                 </TableCell>
-                                <TableCell className="text-xs md:text-sm py-2 truncate max-w-[120px]">
-                                  {record.message}
-                                </TableCell>
-                                <TableCell className="hidden md:table-cell text-xs md:text-sm py-2">
+                                <TableCell className="text-xs md:text-sm">{record.message}</TableCell>
+                                <TableCell className="hidden md:table-cell text-xs md:text-sm">
                                   {record.ipAddress}
                                 </TableCell>
                               </TableRow>
@@ -435,28 +403,26 @@ export default function AdminDashboard() {
                 </div>
 
                 {localLoginHistory.length > 0 ? (
-                  <div className="rounded-md border">
+                  <div className="rounded-md border overflow-hidden">
                     <ScrollArea className="h-[350px] md:h-[500px]">
-                      <div className="w-full overflow-x-auto">
+                      <div className="w-full overflow-auto">
                         <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead className="w-[100px] md:w-[180px] whitespace-nowrap">Time</TableHead>
-                              <TableHead className="min-w-[100px]">Email</TableHead>
-                              <TableHead className="w-[70px]">Status</TableHead>
-                              <TableHead className="min-w-[100px]">Message</TableHead>
+                              <TableHead className="w-[120px] md:w-[180px] whitespace-nowrap">Time</TableHead>
+                              <TableHead className="min-w-[120px]">Email</TableHead>
+                              <TableHead className="w-[80px]">Status</TableHead>
+                              <TableHead className="min-w-[120px]">Message</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {localLoginHistory.map((record, index) => (
                               <TableRow key={index}>
-                                <TableCell className="whitespace-nowrap text-xs md:text-sm py-2">
+                                <TableCell className="whitespace-nowrap text-xs md:text-sm">
                                   {formatDate(record.timestamp)}
                                 </TableCell>
-                                <TableCell className="text-xs md:text-sm py-2 truncate max-w-[120px]">
-                                  {record.email}
-                                </TableCell>
-                                <TableCell className="py-2">
+                                <TableCell className="text-xs md:text-sm">{record.email}</TableCell>
+                                <TableCell>
                                   <span
                                     className={cn(
                                       "text-xs md:text-sm font-medium",
@@ -466,9 +432,7 @@ export default function AdminDashboard() {
                                     {record.status}
                                   </span>
                                 </TableCell>
-                                <TableCell className="text-xs md:text-sm py-2 truncate max-w-[120px]">
-                                  {record.message}
-                                </TableCell>
+                                <TableCell className="text-xs md:text-sm">{record.message}</TableCell>
                               </TableRow>
                             ))}
                           </TableBody>
@@ -494,61 +458,55 @@ export default function AdminDashboard() {
               <CardContent className="px-3 pb-3 md:px-6 md:pb-6">
                 <div className="mt-2 md:mt-6">
                   <h3 className="font-medium mb-4 text-sm md:text-base">User List</h3>
-                  <div className="rounded-md border">
-                    <ScrollArea className="h-[350px] md:h-[500px]">
-                      <div className="w-full overflow-x-auto">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead className="min-w-[100px]">Email</TableHead>
-                              <TableHead className="w-[80px]">Role</TableHead>
-                              <TableHead className="hidden md:table-cell w-[120px]">Last Login</TableHead>
-                              <TableHead className="w-[70px]">Actions</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            <TableRow>
-                              <TableCell className="text-xs md:text-sm py-2 truncate max-w-[120px]">
-                                admin@example.com
-                              </TableCell>
-                              <TableCell className="py-2">
-                                <div className="flex items-center">
-                                  <Shield className="mr-1 h-3 w-3 md:h-4 md:w-4 text-green-500" />
-                                  <span className="text-xs md:text-sm">SUPREME</span>
-                                </div>
-                              </TableCell>
-                              <TableCell className="hidden md:table-cell text-xs md:text-sm py-2 whitespace-nowrap">
-                                {new Date().toLocaleString()}
-                              </TableCell>
-                              <TableCell className="py-2">
-                                <Button variant="ghost" size="sm" disabled className="h-7 px-2 text-xs">
-                                  Edit
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                            <TableRow>
-                              <TableCell className="text-xs md:text-sm py-2 truncate max-w-[120px]">
-                                user@example.com
-                              </TableCell>
-                              <TableCell className="py-2">
-                                <div className="flex items-center">
-                                  <User className="mr-1 h-3 w-3 md:h-4 md:w-4" />
-                                  <span className="text-xs md:text-sm">Standard</span>
-                                </div>
-                              </TableCell>
-                              <TableCell className="hidden md:table-cell text-xs md:text-sm py-2 whitespace-nowrap">
-                                {new Date().toLocaleString()}
-                              </TableCell>
-                              <TableCell className="py-2">
-                                <Button variant="ghost" size="sm" disabled className="h-7 px-2 text-xs">
-                                  Edit
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          </TableBody>
-                        </Table>
-                      </div>
-                    </ScrollArea>
+                  <div className="rounded-md border overflow-hidden">
+                    <div className="w-full overflow-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Role</TableHead>
+                            <TableHead className="hidden md:table-cell">Last Login</TableHead>
+                            <TableHead className="w-[80px]">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          <TableRow>
+                            <TableCell className="text-xs md:text-sm">admin@example.com</TableCell>
+                            <TableCell>
+                              <div className="flex items-center">
+                                <Shield className="mr-1 h-3 w-3 md:h-4 md:w-4 text-green-500" />
+                                <span className="text-xs md:text-sm">SUPREME</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell text-xs md:text-sm">
+                              {new Date().toLocaleString()}
+                            </TableCell>
+                            <TableCell>
+                              <Button variant="ghost" size="sm" disabled className="h-7 px-2 text-xs">
+                                Edit
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                          <TableRow>
+                            <TableCell className="text-xs md:text-sm">user@example.com</TableCell>
+                            <TableCell>
+                              <div className="flex items-center">
+                                <User className="mr-1 h-3 w-3 md:h-4 md:w-4" />
+                                <span className="text-xs md:text-sm">Standard</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell text-xs md:text-sm">
+                              {new Date().toLocaleString()}
+                            </TableCell>
+                            <TableCell>
+                              <Button variant="ghost" size="sm" disabled className="h-7 px-2 text-xs">
+                                Edit
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
                 </div>
               </CardContent>
