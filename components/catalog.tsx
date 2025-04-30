@@ -18,8 +18,6 @@ import type { Product } from "@/lib/types"
 import { useMobile } from "@/hooks/use-mobile"
 import { generateProductCatalogPDF } from "@/lib/pdf-generator"
 import { motion, AnimatePresence } from "framer-motion"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { UserMenu } from "./user-menu"
 import { LoginHistory } from "./login-history"
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet"
@@ -514,45 +512,16 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
 
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-primary">Product Name</label>
-                      <Popover open={openProductSearch} onOpenChange={setOpenProductSearch}>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            aria-expanded={openProductSearch}
-                            className="w-full justify-between"
-                          >
-                            {productNameSearch
-                              ? productNames.find((name) =>
-                                  name.toLowerCase().includes(productNameSearch.toLowerCase()),
-                                ) || "Search products..."
-                              : "Search products..."}
-                            <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-full p-0" align="start">
-                          <Command>
-                            <CommandInput placeholder="Search product name..." className="h-9" />
-                            <CommandList>
-                              <CommandEmpty>No product found.</CommandEmpty>
-                              <CommandGroup>
-                                {productNames.map((name) => (
-                                  <CommandItem
-                                    key={name}
-                                    value={name}
-                                    onSelect={(currentValue) => {
-                                      setProductNameSearch(currentValue)
-                                      setOpenProductSearch(false)
-                                    }}
-                                  >
-                                    {name}
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
+                      <div className="relative w-full">
+                        <Input
+                          type="text"
+                          placeholder="Search products..."
+                          value={productNameSearch}
+                          onChange={(e) => setProductNameSearch(e.target.value)}
+                          className="w-full pr-8"
+                        />
+                        <Search className="absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      </div>
                     </div>
 
                     <div className="space-y-2">
@@ -665,44 +634,16 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
                 {/* Product Name Search */}
                 <div className="space-y-2 col-span-1 md:col-span-2">
                   <label className="text-sm font-medium text-primary">Product Name</label>
-                  <Popover open={openProductSearch} onOpenChange={setOpenProductSearch}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={openProductSearch}
-                        className="w-full justify-between"
-                      >
-                        {productNameSearch
-                          ? productNames.find((name) => name.toLowerCase().includes(productNameSearch.toLowerCase())) ||
-                            "Search products..."
-                          : "Search products..."}
-                        <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-0" align="start">
-                      <Command>
-                        <CommandInput placeholder="Search product name..." className="h-9" />
-                        <CommandList>
-                          <CommandEmpty>No product found.</CommandEmpty>
-                          <CommandGroup>
-                            {productNames.map((name) => (
-                              <CommandItem
-                                key={name}
-                                value={name}
-                                onSelect={(currentValue) => {
-                                  setProductNameSearch(currentValue)
-                                  setOpenProductSearch(false)
-                                }}
-                              >
-                                {name}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                  <div className="relative w-full">
+                    <Input
+                      type="text"
+                      placeholder="Search products..."
+                      value={productNameSearch}
+                      onChange={(e) => setProductNameSearch(e.target.value)}
+                      className="w-full pr-8"
+                    />
+                    <Search className="absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  </div>
                 </div>
 
                 {/* Discount Input Box (replacing dropdown) */}

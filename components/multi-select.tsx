@@ -12,9 +12,18 @@ interface MultiSelectProps {
   selected: string[]
   onChange: (selected: string[]) => void
   placeholder?: string
+  id?: string
+  className?: string
 }
 
-export function MultiSelect({ options, selected, onChange, placeholder = "Select options..." }: MultiSelectProps) {
+export function MultiSelect({
+  options,
+  selected,
+  onChange,
+  placeholder = "Select options...",
+  id,
+  className,
+}: MultiSelectProps) {
   const [open, setOpen] = React.useState(false)
 
   const handleUnselect = (item: string) => {
@@ -37,7 +46,13 @@ export function MultiSelect({ options, selected, onChange, placeholder = "Select
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <div className="group flex min-h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+        <div
+          id={id}
+          className={cn(
+            "group flex min-h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 cursor-pointer",
+            className,
+          )}
+        >
           <div className="flex flex-wrap gap-1">
             {selected.map((item) => {
               const option = options.find((o) => o.value === item)
@@ -55,7 +70,11 @@ export function MultiSelect({ options, selected, onChange, placeholder = "Select
                       e.preventDefault()
                       e.stopPropagation()
                     }}
-                    onClick={() => handleUnselect(item)}
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      handleUnselect(item)
+                    }}
                   >
                     <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
                   </button>
@@ -77,7 +96,11 @@ export function MultiSelect({ options, selected, onChange, placeholder = "Select
                   e.preventDefault()
                   e.stopPropagation()
                 }}
-                onClick={() => onChange([])}
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  onChange([])
+                }}
               >
                 <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
               </button>
@@ -85,10 +108,18 @@ export function MultiSelect({ options, selected, onChange, placeholder = "Select
           </div>
         </div>
       </PopoverTrigger>
-      <PopoverContent className="w-full p-0" align="start">
+      <PopoverContent
+        className="w-full p-0"
+        align="start"
+        side="bottom"
+        sideOffset={5}
+        avoidCollisions={false}
+        alignOffset={0}
+        style={{ width: "var(--radix-popover-trigger-width)", minWidth: "200px", maxWidth: "100vw" }}
+      >
         <Command>
           <CommandInput placeholder="Search options..." />
-          <CommandList>
+          <CommandList className="max-h-[200px]">
             <CommandEmpty>No results found.</CommandEmpty>
             <CommandGroup>
               {options.map((option) => {
