@@ -66,8 +66,8 @@
     "puppeteer": "latest",
     "url": "latest",
     "jspdf": "latest",
-    "framer-motion": "latest",
-    "googleapis": "latest"
+    "googleapis": "latest",
+    "framer-motion": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",

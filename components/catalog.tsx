@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
-import { Download, X, Loader2, Search, Percent } from "lucide-react"
+import { Download, X, Loader2, Search, Percent, ChevronDown, SlidersHorizontal } from "lucide-react"
 import Image from "next/image"
 import { ProductTable } from "./product-table"
 import { PriceFilter } from "./price-filter"
@@ -22,6 +22,8 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { UserMenu } from "./user-menu"
 import { LoginHistory } from "./login-history"
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet"
+import { ScrollArea } from "@/components/ui/scroll-area"
 
 interface CatalogProps {
   userEmail: string
@@ -50,6 +52,7 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
   const [contentLoaded, setContentLoaded] = useState(false)
   const [productNames, setProductNames] = useState<string[]>([])
   const [openProductSearch, setOpenProductSearch] = useState(false)
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
   const clientInfoRef = useRef<HTMLDivElement>(null)
@@ -166,6 +169,7 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
     setDiscount(0)
     setSortOrder("asc")
     setClientName("") // Clear client name when resetting filters
+    setFiltersOpen(false)
   }
 
   // Handle discount input change
@@ -297,9 +301,9 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
 
       <div className={cn("min-h-screen bg-background", !contentLoaded && "opacity-0")} ref={contentRef}>
         <header className="sticky top-0 z-10 border-b bg-background print-header" ref={headerRef}>
-          <div className="container flex items-center justify-between py-4">
-            <div className="flex items-center gap-4">
-              <div className="relative h-12 w-36 group">
+          <div className="container flex items-center justify-between py-2 md:py-4">
+            <div className="flex items-center gap-2 md:gap-4">
+              <div className="relative h-10 w-28 md:h-12 md:w-36 group">
                 <Image
                   src="https://lh3.googleusercontent.com/d/1pMIJ-KTCUVcIAinU7A88PUG550hBGia-"
                   alt="Company Logo"
@@ -315,12 +319,18 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
                   Logged in as: {userEmail}
                 </div>
               </div>
-              <h1 className="text-xl font-bold text-primary md:text-2xl">Product Catalog</h1>
+              <h1 className="text-lg font-bold text-primary md:text-2xl">Product Catalog</h1>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 md:gap-2">
               {isAdmin && (
-                <Button variant="outline" size="sm" className="gap-2" onClick={() => (window.location.href = "/admin")}>
-                  <span className={cn(isMobile ? "sr-only" : "")}>Admin Dashboard</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 px-2 md:h-9 md:px-3"
+                  onClick={() => (window.location.href = "/admin")}
+                >
+                  <span className="hidden md:inline">Admin Dashboard</span>
+                  <span className="md:hidden">Admin</span>
                 </Button>
               )}
               <LoginHistory />
@@ -328,18 +338,281 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
               <Button
                 onClick={handleDownloadPDF}
                 disabled={pdfLoading || filteredProducts.length === 0}
-                className="gap-2 no-print"
+                className="h-8 px-2 md:h-9 md:px-3 no-print"
+                size="sm"
               >
                 {pdfLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                <span className={cn(isMobile ? "sr-only" : "")}>{pdfLoading ? "Generating..." : "Download PDF"}</span>
+                <span className="hidden md:ml-2 md:inline">{pdfLoading ? "Generating..." : "Download PDF"}</span>
               </Button>
             </div>
           </div>
         </header>
 
-        <main className="container py-6">
+        <main className="container py-3 md:py-6">
+          {/* Mobile Filter Button */}
+          <div className="md:hidden mb-4">
+            <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline" className="w-full flex justify-between items-center">
+                  <div className="flex items-center">
+                    <SlidersHorizontal className="mr-2 h-4 w-4" />
+                    <span>Filters & Options</span>
+                  </div>
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="h-[85vh] pt-6 px-4">
+                <SheetHeader className="mb-4">
+                  <SheetTitle>Filters & Options</SheetTitle>
+                </SheetHeader>
+                <ScrollArea className="h-[calc(85vh-120px)] pr-4">
+                  <div className="space-y-6 pb-6">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-primary">Client Name</label>
+                      <Input
+                        placeholder="Enter Client Name"
+                        value={clientName}
+                        onChange={(e) => setClientName(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-primary">Product Category</label>
+                      <MultiSelect
+                        options={categories.map((cat) => ({ label: cat, value: cat }))}
+                        selected={selectedCategories}
+                        onChange={setSelectedCategories}
+                        placeholder="Select categories..."
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-primary">Theme</label>
+                      <MultiSelect
+                        options={themes.map((theme) => ({ label: theme, value: theme }))}
+                        selected={selectedThemes}
+                        onChange={setSelectedThemes}
+                        placeholder="Select themes..."
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-primary">Occasion</label>
+                      <MultiSelect
+                        id="occasion-filter"
+                        className="searchable-dropdown"
+                        options={occasions.map((occasion) => ({ label: occasion, value: occasion }))}
+                        selected={selectedOccasions}
+                        onChange={setSelectedOccasions}
+                        placeholder="Select occasions..."
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-primary">Price Range</label>
+                      <div className="rounded-md border bg-muted/40 p-2 text-sm">
+                        ₹{priceRange[0]} - ₹{priceRange[1]}
+                      </div>
+
+                      <div className="mb-2 flex justify-between">
+                        <span className="font-medium text-sm">₹{priceRange[0]}</span>
+                        <span className="font-medium text-sm">₹{priceRange[1]}</span>
+                      </div>
+
+                      <div className="px-1">
+                        <div className="mb-4">
+                          <div className="mb-2 flex flex-wrap gap-2">
+                            <Button
+                              size="sm"
+                              variant={priceRange[0] === 0 && priceRange[1] === 5000 ? "default" : "outline"}
+                              onClick={() => setPriceRange([0, 5000])}
+                              className="h-7 px-2 text-xs rounded-full"
+                            >
+                              All Prices
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={priceRange[0] === 0 && priceRange[1] === 250 ? "default" : "outline"}
+                              onClick={() => setPriceRange([0, 250])}
+                              className="h-7 px-2 text-xs rounded-full"
+                            >
+                              Under ₹250
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={priceRange[0] === 250 && priceRange[1] === 500 ? "default" : "outline"}
+                              onClick={() => setPriceRange([250, 500])}
+                              className="h-7 px-2 text-xs rounded-full"
+                            >
+                              ₹250 - ₹500
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={priceRange[0] === 500 && priceRange[1] === 1500 ? "default" : "outline"}
+                              onClick={() => setPriceRange([500, 1500])}
+                              className="h-7 px-2 text-xs rounded-full"
+                            >
+                              ₹500 - ₹1500
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={priceRange[0] === 1500 && priceRange[1] === 3000 ? "default" : "outline"}
+                              onClick={() => setPriceRange([1500, 3000])}
+                              className="h-7 px-2 text-xs rounded-full"
+                            >
+                              ₹1500 - ₹3000
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant={priceRange[0] === 3000 && priceRange[1] === 5000 ? "default" : "outline"}
+                              onClick={() => setPriceRange([3000, 5000])}
+                              className="h-7 px-2 text-xs rounded-full"
+                            >
+                              ₹3000 - ₹5000
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mb-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium">Min Price</label>
+                            <Input
+                              type="number"
+                              min={0}
+                              max={5000}
+                              value={priceRange[0]}
+                              onChange={(e) => {
+                                const value = Number.parseInt(e.target.value)
+                                if (!isNaN(value)) {
+                                  setPriceRange([Math.max(0, Math.min(value, priceRange[1])), priceRange[1]])
+                                }
+                              }}
+                              className="h-8 text-sm"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-xs font-medium">Max Price</label>
+                            <Input
+                              type="number"
+                              min={0}
+                              max={5000}
+                              value={priceRange[1]}
+                              onChange={(e) => {
+                                const value = Number.parseInt(e.target.value)
+                                if (!isNaN(value)) {
+                                  setPriceRange([priceRange[0], Math.max(priceRange[0], Math.min(value, 5000))])
+                                }
+                              }}
+                              className="h-8 text-sm"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-primary">Product Name</label>
+                      <Popover open={openProductSearch} onOpenChange={setOpenProductSearch}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={openProductSearch}
+                            className="w-full justify-between"
+                          >
+                            {productNameSearch
+                              ? productNames.find((name) =>
+                                  name.toLowerCase().includes(productNameSearch.toLowerCase()),
+                                ) || "Search products..."
+                              : "Search products..."}
+                            <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0" align="start">
+                          <Command>
+                            <CommandInput placeholder="Search product name..." className="h-9" />
+                            <CommandList>
+                              <CommandEmpty>No product found.</CommandEmpty>
+                              <CommandGroup>
+                                {productNames.map((name) => (
+                                  <CommandItem
+                                    key={name}
+                                    value={name}
+                                    onSelect={(currentValue) => {
+                                      setProductNameSearch(currentValue)
+                                      setOpenProductSearch(false)
+                                    }}
+                                  >
+                                    {name}
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-primary">Discount (%)</label>
+                      <div className="flex items-center gap-4">
+                        <Input
+                          type="number"
+                          min={0}
+                          max={30}
+                          value={discount}
+                          onChange={handleDiscountChange}
+                          className="w-full"
+                          placeholder="Enter discount percentage (0-30)"
+                        />
+                        <div className="flex h-9 w-9 items-center justify-center rounded-md border bg-background">
+                          <Percent className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {areFiltersActive() && (
+                      <div className="flex items-center justify-between rounded-lg border bg-background p-2 shadow-sm">
+                        <div className="flex flex-wrap items-center gap-1">
+                          <span className="text-xs text-muted-foreground">Active filters:</span>
+                          {priceRange[0] !== 0 || priceRange[1] !== 5000 ? (
+                            <span className="rounded-full bg-primary px-2 py-1 text-xs font-medium text-primary-foreground">
+                              ₹{priceRange[0]} - ₹{priceRange[1]}
+                            </span>
+                          ) : null}
+                          {discount > 0 ? (
+                            <span className="rounded-full bg-green-500 px-2 py-1 text-xs font-medium text-white">
+                              {discount}% Discount
+                            </span>
+                          ) : null}
+                          {productNameSearch ? (
+                            <span className="rounded-full bg-blue-500 px-2 py-1 text-xs font-medium text-white">
+                              "{productNameSearch}"
+                            </span>
+                          ) : null}
+                        </div>
+                        <Button variant="outline" size="sm" onClick={resetFilters} className="h-7 px-2 text-xs">
+                          <X className="mr-1 h-3 w-3" />
+                          Clear
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+                <SheetFooter className="flex justify-end gap-2 pt-4 border-t mt-2">
+                  <Button variant="outline" onClick={resetFilters}>
+                    Reset All
+                  </Button>
+                  <Button onClick={() => setFiltersOpen(false)}>Apply Filters</Button>
+                </SheetFooter>
+              </SheetContent>
+            </Sheet>
+          </div>
+
           <section className="intro">
-            <Card className="mb-6 p-4 md:p-6 client-info-card intro-section" ref={clientInfoRef}>
+            <Card className="mb-4 p-3 md:p-6 client-info-card intro-section hidden md:block" ref={clientInfoRef}>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-primary">Client Name</label>
@@ -454,30 +727,30 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
             </Card>
           </section>
 
-          <div className="no-print filter-controls">
+          <div className="no-print filter-controls hidden md:block">
             <PriceFilter value={priceRange} onChange={setPriceRange} onReset={resetFilters} />
 
             {areFiltersActive() && (
-              <div className="mb-6 flex items-center justify-between rounded-lg border bg-background p-3 shadow-sm">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Active filters:</span>
+              <div className="mb-4 md:mb-6 flex items-center justify-between rounded-lg border bg-background p-2 md:p-3 shadow-sm">
+                <div className="flex flex-wrap items-center gap-1 md:gap-2">
+                  <span className="text-xs md:text-sm text-muted-foreground">Active filters:</span>
                   {priceRange[0] !== 0 || priceRange[1] !== 5000 ? (
-                    <span className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
+                    <span className="rounded-full bg-primary px-2 py-1 text-xs font-medium text-primary-foreground">
                       ₹{priceRange[0]} - ₹{priceRange[1]}
                     </span>
                   ) : null}
                   {discount > 0 ? (
-                    <span className="rounded-full bg-green-500 px-3 py-1 text-xs font-medium text-white">
+                    <span className="rounded-full bg-green-500 px-2 py-1 text-xs font-medium text-white">
                       {discount}% Discount
                     </span>
                   ) : null}
                   {productNameSearch ? (
-                    <span className="rounded-full bg-blue-500 px-3 py-1 text-xs font-medium text-white">
+                    <span className="rounded-full bg-blue-500 px-2 py-1 text-xs font-medium text-white">
                       "{productNameSearch}"
                     </span>
                   ) : null}
                 </div>
-                <Button variant="outline" size="sm" onClick={resetFilters} className="text-sm">
+                <Button variant="outline" size="sm" onClick={resetFilters} className="h-7 px-2 text-xs md:text-sm">
                   <X className="mr-1 h-3 w-3" />
                   Clear
                 </Button>
@@ -497,7 +770,7 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
           />
         </main>
 
-        <footer className="border-t py-6 text-center text-sm text-muted-foreground">
+        <footer className="border-t py-4 md:py-6 text-center text-xs md:text-sm text-muted-foreground">
           <p>© {new Date().getFullYear()} Product Catalog. All products subject to availability.</p>
         </footer>
       </div>
