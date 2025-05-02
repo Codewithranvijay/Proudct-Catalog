@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
-import { Download, X, Loader2, Percent, Filter } from "lucide-react"
+import { Download, X, Loader2, Percent, Filter, SlidersHorizontal } from "lucide-react"
 import Image from "next/image"
 import { ProductTable } from "./product-table"
 import { PriceFilter } from "./price-filter"
@@ -21,6 +21,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { UserMenu } from "./user-menu"
 import { LoginHistory } from "./login-history"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { Slider } from "@/components/ui/slider"
 
 interface CatalogProps {
   userEmail: string
@@ -178,6 +179,11 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
     }
   }
 
+  // Handle slider change
+  const handleSliderChange = (newValue: number[]) => {
+    setPriceRange([newValue[0], newValue[1]])
+  }
+
   // PDF generation method using client-side approach
   const handleDownloadPDF = async () => {
     if (filteredProducts.length === 0) {
@@ -252,6 +258,20 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
       priceRange[0] !== 0 ||
       priceRange[1] !== 5000
     )
+  }
+
+  // Price chip options
+  const priceChips = [
+    { label: "All Prices", min: 0, max: 5000 },
+    { label: "Under ₹250", min: 0, max: 250 },
+    { label: "₹250 - ₹500", min: 250, max: 500 },
+    { label: "₹500 - ₹1500", min: 500, max: 1500 },
+    { label: "₹1500 - ₹3000", min: 1500, max: 3000 },
+    { label: "₹3000 - ₹5000", min: 3000, max: 5000 },
+  ]
+
+  const isChipActive = (chip: { min: number; max: number }) => {
+    return priceRange[0] === chip.min && priceRange[1] === chip.max
   }
 
   return (
@@ -352,7 +372,7 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
               onClick={() => setUseAccordionFilters(!useAccordionFilters)}
             >
               <div className="flex items-center">
-                <Filter className="mr-2 h-4 w-4" />
+                <SlidersHorizontal className="mr-2 h-4 w-4" />
                 <span>Filter Style</span>
               </div>
               {useAccordionFilters ? (
@@ -361,6 +381,83 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
                 <span className="text-xs">Expanded</span>
               )}
             </Button>
+          </div>
+
+          {/* Mobile Price Filter */}
+          <div className="md:hidden mb-4">
+            <Card className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2 text-primary">
+                  <Filter className="h-5 w-5" />
+                  <h3 className="font-medium">Price Filter</h3>
+                </div>
+                <Button variant="outline" size="sm" onClick={resetFilters} className="h-8 px-3 text-xs">
+                  <X className="mr-1 h-3 w-3" />
+                  Reset
+                </Button>
+              </div>
+
+              <div className="mb-4 flex flex-wrap gap-2">
+                {priceChips.map((chip) => (
+                  <Button
+                    key={chip.label}
+                    variant={isChipActive(chip) ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setPriceRange([chip.min, chip.max])}
+                    className={cn("rounded-full", isChipActive(chip) ? "bg-primary text-primary-foreground" : "")}
+                  >
+                    {chip.label}
+                  </Button>
+                ))}
+              </div>
+
+              <div className="mb-2 flex justify-between">
+                <span className="font-medium">₹{priceRange[0]}</span>
+                <span className="font-medium">₹{priceRange[1]}</span>
+              </div>
+
+              <Slider
+                defaultValue={[0, 5000]}
+                value={[priceRange[0], priceRange[1]]}
+                max={5000}
+                step={50}
+                onValueChange={handleSliderChange}
+                className="mb-6"
+              />
+
+              <div className="mb-4 grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Min Price</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={5000}
+                    value={priceRange[0]}
+                    onChange={(e) => {
+                      const value = Number.parseInt(e.target.value)
+                      if (!isNaN(value)) {
+                        setPriceRange([Math.max(0, Math.min(value, priceRange[1])), priceRange[1]])
+                      }
+                    }}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Max Price</label>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={5000}
+                    value={priceRange[1]}
+                    onChange={(e) => {
+                      const value = Number.parseInt(e.target.value)
+                      if (!isNaN(value)) {
+                        setPriceRange([priceRange[0], Math.max(priceRange[0], Math.min(value, 5000))])
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            </Card>
           </div>
 
           {/* Mobile Accordion Filters */}
@@ -423,59 +520,6 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
                           id="mobile-occasion-select"
                           className="w-full"
                         />
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-
-                  <AccordionItem value="price">
-                    <AccordionTrigger className="text-sm py-2">Price Range</AccordionTrigger>
-                    <AccordionContent>
-                      <div className="space-y-2">
-                        <div className="rounded-md border bg-muted/40 p-2 text-sm">
-                          ₹{priceRange[0]} - ₹{priceRange[1]}
-                        </div>
-
-                        <div className="mb-2 flex justify-between">
-                          <span className="font-medium text-sm">₹{priceRange[0]}</span>
-                          <span className="font-medium text-sm">₹{priceRange[1]}</span>
-                        </div>
-
-                        <div className="mb-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1">
-                              <label className="text-xs font-medium">Min Price</label>
-                              <Input
-                                type="number"
-                                min={0}
-                                max={5000}
-                                value={priceRange[0]}
-                                onChange={(e) => {
-                                  const value = Number.parseInt(e.target.value)
-                                  if (!isNaN(value)) {
-                                    setPriceRange([Math.max(0, Math.min(value, priceRange[1])), priceRange[1]])
-                                  }
-                                }}
-                                className="h-8 text-sm"
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <label className="text-xs font-medium">Max Price</label>
-                              <Input
-                                type="number"
-                                min={0}
-                                max={5000}
-                                value={priceRange[1]}
-                                onChange={(e) => {
-                                  const value = Number.parseInt(e.target.value)
-                                  if (!isNaN(value)) {
-                                    setPriceRange([priceRange[0], Math.max(priceRange[0], Math.min(value, 5000))])
-                                  }
-                                }}
-                                className="h-8 text-sm"
-                              />
-                            </div>
-                          </div>
-                        </div>
                       </div>
                     </AccordionContent>
                   </AccordionItem>
@@ -561,47 +605,6 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
                       id="mobile-occasion-select-expanded"
                       className="w-full"
                     />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-primary">Price Range</label>
-                    <div className="rounded-md border bg-muted/40 p-2 text-sm">
-                      ₹{priceRange[0]} - ₹{priceRange[1]}
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <label className="text-xs font-medium">Min Price</label>
-                        <Input
-                          type="number"
-                          min={0}
-                          max={5000}
-                          value={priceRange[0]}
-                          onChange={(e) => {
-                            const value = Number.parseInt(e.target.value)
-                            if (!isNaN(value)) {
-                              setPriceRange([Math.max(0, Math.min(value, priceRange[1])), priceRange[1]])
-                            }
-                          }}
-                          className="h-8 text-sm"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-xs font-medium">Max Price</label>
-                        <Input
-                          type="number"
-                          min={0}
-                          max={5000}
-                          value={priceRange[1]}
-                          onChange={(e) => {
-                            const value = Number.parseInt(e.target.value)
-                            if (!isNaN(value)) {
-                              setPriceRange([priceRange[0], Math.max(priceRange[0], Math.min(value, 5000))])
-                            }
-                          }}
-                          className="h-8 text-sm"
-                        />
-                      </div>
-                    </div>
                   </div>
 
                   <div className="space-y-2">
