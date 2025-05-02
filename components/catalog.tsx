@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
-import { Download, X, Loader2, Percent, Filter, SlidersHorizontal, ArrowDownAZ, ArrowUpZA } from "lucide-react"
+import { Download, X, Loader2, Percent, Filter, SlidersHorizontal } from "lucide-react"
 import Image from "next/image"
 import { ProductTable } from "./product-table"
 import { PriceFilter } from "./price-filter"
@@ -166,11 +166,6 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
     setDiscount(0)
     setSortOrder("asc")
     setClientName("") // Clear client name when resetting filters
-  }
-
-  // Toggle sort order
-  const toggleSortOrder = () => {
-    setSortOrder(sortOrder === "asc" ? "desc" : "asc")
   }
 
   // Handle discount input change
@@ -384,26 +379,6 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
                 <span className="text-xs">Accordion</span>
               ) : (
                 <span className="text-xs">Expanded</span>
-              )}
-            </Button>
-
-            {/* Mobile Price Sort Button */}
-            <Button
-              variant="outline"
-              className="flex items-center gap-1"
-              onClick={toggleSortOrder}
-              aria-label={sortOrder === "asc" ? "Sort price high to low" : "Sort price low to high"}
-            >
-              {sortOrder === "asc" ? (
-                <>
-                  <ArrowUpZA className="h-4 w-4" />
-                  <span className="sr-only md:not-sr-only md:inline-block text-xs">Low to High</span>
-                </>
-              ) : (
-                <>
-                  <ArrowDownAZ className="h-4 w-4" />
-                  <span className="sr-only md:not-sr-only md:inline-block text-xs">High to Low</span>
-                </>
               )}
             </Button>
           </div>
@@ -763,29 +738,7 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
           </section>
 
           <div className="no-print filter-controls hidden md:block">
-            <div className="flex justify-between items-center mb-4">
-              <PriceFilter value={priceRange} onChange={setPriceRange} onReset={resetFilters} />
-
-              {/* Desktop Price Sort Button */}
-              <Button
-                variant="outline"
-                className="flex items-center gap-2 h-10"
-                onClick={toggleSortOrder}
-                aria-label={sortOrder === "asc" ? "Sort price high to low" : "Sort price low to high"}
-              >
-                {sortOrder === "asc" ? (
-                  <>
-                    <ArrowUpZA className="h-4 w-4" />
-                    <span>Price: Low to High</span>
-                  </>
-                ) : (
-                  <>
-                    <ArrowDownAZ className="h-4 w-4" />
-                    <span>Price: High to Low</span>
-                  </>
-                )}
-              </Button>
-            </div>
+            <PriceFilter value={priceRange} onChange={setPriceRange} onReset={resetFilters} />
 
             {areFiltersActive() && (
               <div className="mb-4 md:mb-6 flex items-center justify-between rounded-lg border bg-background p-2 md:p-3 shadow-sm">
