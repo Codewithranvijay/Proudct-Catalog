@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
-import { Download, X, Loader2, Search, Percent, ChevronDown, SlidersHorizontal } from "lucide-react"
+import { Download, X, Loader2, Percent, Filter } from "lucide-react"
 import Image from "next/image"
 import { ProductTable } from "./product-table"
 import { PriceFilter } from "./price-filter"
@@ -18,12 +18,9 @@ import type { Product } from "@/lib/types"
 import { useMobile } from "@/hooks/use-mobile"
 import { generateProductCatalogPDF } from "@/lib/pdf-generator"
 import { motion, AnimatePresence } from "framer-motion"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { UserMenu } from "./user-menu"
 import { LoginHistory } from "./login-history"
-import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
 interface CatalogProps {
   userEmail: string
@@ -44,15 +41,14 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [selectedThemes, setSelectedThemes] = useState<string[]>([])
   const [selectedOccasions, setSelectedOccasions] = useState<string[]>([])
-  const [productNameSearch, setProductNameSearch] = useState("")
+  const [selectedProductNames, setSelectedProductNames] = useState<string[]>([])
   const [discount, setDiscount] = useState(0)
   const [clientName, setClientName] = useState("")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
   const [showIntro, setShowIntro] = useState(true)
   const [contentLoaded, setContentLoaded] = useState(false)
   const [productNames, setProductNames] = useState<string[]>([])
-  const [openProductSearch, setOpenProductSearch] = useState(false)
-  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [useAccordionFilters, setUseAccordionFilters] = useState(true)
   const contentRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
   const clientInfoRef = useRef<HTMLDivElement>(null)
@@ -81,7 +77,7 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
 
   useEffect(() => {
     filterProducts()
-  }, [products, selectedCategories, selectedThemes, selectedOccasions, priceRange, sortOrder, productNameSearch])
+  }, [products, selectedCategories, selectedThemes, selectedOccasions, selectedProductNames, priceRange, sortOrder])
 
   const loadProducts = async () => {
     setLoading(true)
@@ -142,10 +138,10 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
       filtered = filtered.filter((product) => selectedOccasions.includes(product.occasion))
     }
 
-    // Filter by product name search
-    if (productNameSearch) {
+    // Filter by selected product names
+    if (selectedProductNames.length > 0) {
       filtered = filtered.filter((product) =>
-        product.productName.toLowerCase().includes(productNameSearch.toLowerCase()),
+        selectedProductNames.some((name) => product.productName.toLowerCase().includes(name.toLowerCase())),
       )
     }
 
@@ -165,11 +161,10 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
     setSelectedCategories([])
     setSelectedThemes([])
     setSelectedOccasions([])
-    setProductNameSearch("")
+    setSelectedProductNames([])
     setDiscount(0)
     setSortOrder("asc")
     setClientName("") // Clear client name when resetting filters
-    setFiltersOpen(false)
   }
 
   // Handle discount input change
@@ -252,7 +247,7 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
       selectedCategories.length > 0 ||
       selectedThemes.length > 0 ||
       selectedOccasions.length > 0 ||
-      productNameSearch !== "" ||
+      selectedProductNames.length > 0 ||
       discount > 0 ||
       priceRange[0] !== 0 ||
       priceRange[1] !== 5000
@@ -349,214 +344,161 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
         </header>
 
         <main className="container py-3 md:py-6">
-          {/* Mobile Filter Button */}
+          {/* Mobile Filter Options */}
+          <div className="md:hidden mb-4 flex gap-2">
+            <Button
+              variant="outline"
+              className="flex-1 justify-between items-center"
+              onClick={() => setUseAccordionFilters(!useAccordionFilters)}
+            >
+              <div className="flex items-center">
+                <Filter className="mr-2 h-4 w-4" />
+                <span>Filter Style</span>
+              </div>
+              {useAccordionFilters ? (
+                <span className="text-xs">Accordion</span>
+              ) : (
+                <span className="text-xs">Expanded</span>
+              )}
+            </Button>
+          </div>
+
+          {/* Mobile Accordion Filters */}
           <div className="md:hidden mb-4">
-            <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
-              <SheetTrigger asChild>
-                <Button variant="outline" className="w-full flex justify-between items-center">
-                  <div className="flex items-center">
-                    <SlidersHorizontal className="mr-2 h-4 w-4" />
-                    <span>Filters & Options</span>
-                  </div>
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="bottom" className="h-[85vh] pt-6 px-4">
-                <SheetHeader className="mb-4">
-                  <SheetTitle>Filters & Options</SheetTitle>
-                </SheetHeader>
-                <ScrollArea className="h-[calc(85vh-120px)] pr-4">
-                  <div className="space-y-6 pb-6">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-primary">Client Name</label>
+            <Card className="p-3">
+              {useAccordionFilters ? (
+                <Accordion type="multiple" className="w-full">
+                  <AccordionItem value="client-name">
+                    <AccordionTrigger className="text-sm py-2">Client Name</AccordionTrigger>
+                    <AccordionContent>
                       <Input
                         placeholder="Enter Client Name"
                         value={clientName}
                         onChange={(e) => setClientName(e.target.value)}
                       />
-                    </div>
+                    </AccordionContent>
+                  </AccordionItem>
 
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-primary">Product Category</label>
-                      <MultiSelect
-                        options={categories.map((cat) => ({ label: cat, value: cat }))}
-                        selected={selectedCategories}
-                        onChange={setSelectedCategories}
-                        placeholder="Select categories..."
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-primary">Theme</label>
-                      <MultiSelect
-                        options={themes.map((theme) => ({ label: theme, value: theme }))}
-                        selected={selectedThemes}
-                        onChange={setSelectedThemes}
-                        placeholder="Select themes..."
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-primary">Occasion</label>
-                      <MultiSelect
-                        id="occasion-filter"
-                        className="searchable-dropdown"
-                        options={occasions.map((occasion) => ({ label: occasion, value: occasion }))}
-                        selected={selectedOccasions}
-                        onChange={setSelectedOccasions}
-                        placeholder="Select occasions..."
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-primary">Price Range</label>
-                      <div className="rounded-md border bg-muted/40 p-2 text-sm">
-                        ₹{priceRange[0]} - ₹{priceRange[1]}
+                  <AccordionItem value="category">
+                    <AccordionTrigger className="text-sm py-2">Product Category</AccordionTrigger>
+                    <AccordionContent>
+                      <div className="z-50">
+                        <MultiSelect
+                          options={categories.map((cat) => ({ label: cat, value: cat }))}
+                          selected={selectedCategories}
+                          onChange={setSelectedCategories}
+                          placeholder="Select categories..."
+                          id="mobile-category-select"
+                          className="w-full"
+                        />
                       </div>
+                    </AccordionContent>
+                  </AccordionItem>
 
-                      <div className="mb-2 flex justify-between">
-                        <span className="font-medium text-sm">₹{priceRange[0]}</span>
-                        <span className="font-medium text-sm">₹{priceRange[1]}</span>
+                  <AccordionItem value="theme">
+                    <AccordionTrigger className="text-sm py-2">Theme</AccordionTrigger>
+                    <AccordionContent>
+                      <div className="z-40">
+                        <MultiSelect
+                          options={themes.map((theme) => ({ label: theme, value: theme }))}
+                          selected={selectedThemes}
+                          onChange={setSelectedThemes}
+                          placeholder="Select themes..."
+                          id="mobile-theme-select"
+                          className="w-full"
+                        />
                       </div>
+                    </AccordionContent>
+                  </AccordionItem>
 
-                      <div className="px-1">
+                  <AccordionItem value="occasion">
+                    <AccordionTrigger className="text-sm py-2">Occasion</AccordionTrigger>
+                    <AccordionContent>
+                      <div className="z-30">
+                        <MultiSelect
+                          options={occasions.map((occasion) => ({ label: occasion, value: occasion }))}
+                          selected={selectedOccasions}
+                          onChange={setSelectedOccasions}
+                          placeholder="Select occasions..."
+                          id="mobile-occasion-select"
+                          className="w-full"
+                        />
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="price">
+                    <AccordionTrigger className="text-sm py-2">Price Range</AccordionTrigger>
+                    <AccordionContent>
+                      <div className="space-y-2">
+                        <div className="rounded-md border bg-muted/40 p-2 text-sm">
+                          ₹{priceRange[0]} - ₹{priceRange[1]}
+                        </div>
+
+                        <div className="mb-2 flex justify-between">
+                          <span className="font-medium text-sm">₹{priceRange[0]}</span>
+                          <span className="font-medium text-sm">₹{priceRange[1]}</span>
+                        </div>
+
                         <div className="mb-4">
-                          <div className="mb-2 flex flex-wrap gap-2">
-                            <Button
-                              size="sm"
-                              variant={priceRange[0] === 0 && priceRange[1] === 5000 ? "default" : "outline"}
-                              onClick={() => setPriceRange([0, 5000])}
-                              className="h-7 px-2 text-xs rounded-full"
-                            >
-                              All Prices
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant={priceRange[0] === 0 && priceRange[1] === 250 ? "default" : "outline"}
-                              onClick={() => setPriceRange([0, 250])}
-                              className="h-7 px-2 text-xs rounded-full"
-                            >
-                              Under ₹250
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant={priceRange[0] === 250 && priceRange[1] === 500 ? "default" : "outline"}
-                              onClick={() => setPriceRange([250, 500])}
-                              className="h-7 px-2 text-xs rounded-full"
-                            >
-                              ₹250 - ₹500
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant={priceRange[0] === 500 && priceRange[1] === 1500 ? "default" : "outline"}
-                              onClick={() => setPriceRange([500, 1500])}
-                              className="h-7 px-2 text-xs rounded-full"
-                            >
-                              ₹500 - ₹1500
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant={priceRange[0] === 1500 && priceRange[1] === 3000 ? "default" : "outline"}
-                              onClick={() => setPriceRange([1500, 3000])}
-                              className="h-7 px-2 text-xs rounded-full"
-                            >
-                              ₹1500 - ₹3000
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant={priceRange[0] === 3000 && priceRange[1] === 5000 ? "default" : "outline"}
-                              onClick={() => setPriceRange([3000, 5000])}
-                              className="h-7 px-2 text-xs rounded-full"
-                            >
-                              ₹3000 - ₹5000
-                            </Button>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium">Min Price</label>
+                              <Input
+                                type="number"
+                                min={0}
+                                max={5000}
+                                value={priceRange[0]}
+                                onChange={(e) => {
+                                  const value = Number.parseInt(e.target.value)
+                                  if (!isNaN(value)) {
+                                    setPriceRange([Math.max(0, Math.min(value, priceRange[1])), priceRange[1]])
+                                  }
+                                }}
+                                className="h-8 text-sm"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium">Max Price</label>
+                              <Input
+                                type="number"
+                                min={0}
+                                max={5000}
+                                value={priceRange[1]}
+                                onChange={(e) => {
+                                  const value = Number.parseInt(e.target.value)
+                                  if (!isNaN(value)) {
+                                    setPriceRange([priceRange[0], Math.max(priceRange[0], Math.min(value, 5000))])
+                                  }
+                                }}
+                                className="h-8 text-sm"
+                              />
+                            </div>
                           </div>
                         </div>
                       </div>
+                    </AccordionContent>
+                  </AccordionItem>
 
-                      <div className="mb-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-1">
-                            <label className="text-xs font-medium">Min Price</label>
-                            <Input
-                              type="number"
-                              min={0}
-                              max={5000}
-                              value={priceRange[0]}
-                              onChange={(e) => {
-                                const value = Number.parseInt(e.target.value)
-                                if (!isNaN(value)) {
-                                  setPriceRange([Math.max(0, Math.min(value, priceRange[1])), priceRange[1]])
-                                }
-                              }}
-                              className="h-8 text-sm"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-xs font-medium">Max Price</label>
-                            <Input
-                              type="number"
-                              min={0}
-                              max={5000}
-                              value={priceRange[1]}
-                              onChange={(e) => {
-                                const value = Number.parseInt(e.target.value)
-                                if (!isNaN(value)) {
-                                  setPriceRange([priceRange[0], Math.max(priceRange[0], Math.min(value, 5000))])
-                                }
-                              }}
-                              className="h-8 text-sm"
-                            />
-                          </div>
-                        </div>
+                  <AccordionItem value="product-name">
+                    <AccordionTrigger className="text-sm py-2">Product Name</AccordionTrigger>
+                    <AccordionContent>
+                      <div className="z-20">
+                        <MultiSelect
+                          options={productNames.map((name) => ({ label: name, value: name }))}
+                          selected={selectedProductNames}
+                          onChange={setSelectedProductNames}
+                          placeholder="Select product names..."
+                          id="mobile-product-select"
+                          className="w-full"
+                        />
                       </div>
-                    </div>
+                    </AccordionContent>
+                  </AccordionItem>
 
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-primary">Product Name</label>
-                      <Popover open={openProductSearch} onOpenChange={setOpenProductSearch}>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            aria-expanded={openProductSearch}
-                            className="w-full justify-between"
-                          >
-                            {productNameSearch
-                              ? productNames.find((name) =>
-                                  name.toLowerCase().includes(productNameSearch.toLowerCase()),
-                                ) || "Search products..."
-                              : "Search products..."}
-                            <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-full p-0" align="start">
-                          <Command>
-                            <CommandInput placeholder="Search product name..." className="h-9" />
-                            <CommandList>
-                              <CommandEmpty>No product found.</CommandEmpty>
-                              <CommandGroup>
-                                {productNames.map((name) => (
-                                  <CommandItem
-                                    key={name}
-                                    value={name}
-                                    onSelect={(currentValue) => {
-                                      setProductNameSearch(currentValue)
-                                      setOpenProductSearch(false)
-                                    }}
-                                  >
-                                    {name}
-                                  </CommandItem>
-                                ))}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-primary">Discount (%)</label>
+                  <AccordionItem value="discount">
+                    <AccordionTrigger className="text-sm py-2">Discount (%)</AccordionTrigger>
+                    <AccordionContent>
                       <div className="flex items-center gap-4">
                         <Input
                           type="number"
@@ -571,44 +513,141 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
                           <Percent className="h-4 w-4 text-muted-foreground" />
                         </div>
                       </div>
-                    </div>
-
-                    {areFiltersActive() && (
-                      <div className="flex items-center justify-between rounded-lg border bg-background p-2 shadow-sm">
-                        <div className="flex flex-wrap items-center gap-1">
-                          <span className="text-xs text-muted-foreground">Active filters:</span>
-                          {priceRange[0] !== 0 || priceRange[1] !== 5000 ? (
-                            <span className="rounded-full bg-primary px-2 py-1 text-xs font-medium text-primary-foreground">
-                              ₹{priceRange[0]} - ₹{priceRange[1]}
-                            </span>
-                          ) : null}
-                          {discount > 0 ? (
-                            <span className="rounded-full bg-green-500 px-2 py-1 text-xs font-medium text-white">
-                              {discount}% Discount
-                            </span>
-                          ) : null}
-                          {productNameSearch ? (
-                            <span className="rounded-full bg-blue-500 px-2 py-1 text-xs font-medium text-white">
-                              "{productNameSearch}"
-                            </span>
-                          ) : null}
-                        </div>
-                        <Button variant="outline" size="sm" onClick={resetFilters} className="h-7 px-2 text-xs">
-                          <X className="mr-1 h-3 w-3" />
-                          Clear
-                        </Button>
-                      </div>
-                    )}
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              ) : (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-primary">Client Name</label>
+                    <Input
+                      placeholder="Enter Client Name"
+                      value={clientName}
+                      onChange={(e) => setClientName(e.target.value)}
+                    />
                   </div>
-                </ScrollArea>
-                <SheetFooter className="flex justify-end gap-2 pt-4 border-t mt-2">
-                  <Button variant="outline" onClick={resetFilters}>
-                    Reset All
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-primary">Product Category</label>
+                    <MultiSelect
+                      options={categories.map((cat) => ({ label: cat, value: cat }))}
+                      selected={selectedCategories}
+                      onChange={setSelectedCategories}
+                      placeholder="Select categories..."
+                      id="mobile-category-select-expanded"
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-primary">Theme</label>
+                    <MultiSelect
+                      options={themes.map((theme) => ({ label: theme, value: theme }))}
+                      selected={selectedThemes}
+                      onChange={setSelectedThemes}
+                      placeholder="Select themes..."
+                      id="mobile-theme-select-expanded"
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-primary">Occasion</label>
+                    <MultiSelect
+                      options={occasions.map((occasion) => ({ label: occasion, value: occasion }))}
+                      selected={selectedOccasions}
+                      onChange={setSelectedOccasions}
+                      placeholder="Select occasions..."
+                      id="mobile-occasion-select-expanded"
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-primary">Price Range</label>
+                    <div className="rounded-md border bg-muted/40 p-2 text-sm">
+                      ₹{priceRange[0]} - ₹{priceRange[1]}
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium">Min Price</label>
+                        <Input
+                          type="number"
+                          min={0}
+                          max={5000}
+                          value={priceRange[0]}
+                          onChange={(e) => {
+                            const value = Number.parseInt(e.target.value)
+                            if (!isNaN(value)) {
+                              setPriceRange([Math.max(0, Math.min(value, priceRange[1])), priceRange[1]])
+                            }
+                          }}
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium">Max Price</label>
+                        <Input
+                          type="number"
+                          min={0}
+                          max={5000}
+                          value={priceRange[1]}
+                          onChange={(e) => {
+                            const value = Number.parseInt(e.target.value)
+                            if (!isNaN(value)) {
+                              setPriceRange([priceRange[0], Math.max(priceRange[0], Math.min(value, 5000))])
+                            }
+                          }}
+                          className="h-8 text-sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-primary">Product Name</label>
+                    <MultiSelect
+                      options={productNames.map((name) => ({ label: name, value: name }))}
+                      selected={selectedProductNames}
+                      onChange={setSelectedProductNames}
+                      placeholder="Select product names..."
+                      id="mobile-product-select-expanded"
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-primary">Discount (%)</label>
+                    <div className="flex items-center gap-4">
+                      <Input
+                        type="number"
+                        min={0}
+                        max={30}
+                        value={discount}
+                        onChange={handleDiscountChange}
+                        className="w-full"
+                        placeholder="Enter discount percentage (0-30)"
+                      />
+                      <div className="flex h-9 w-9 items-center justify-center rounded-md border bg-background">
+                        <Percent className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {areFiltersActive() && (
+                <div className="mt-4 flex items-center justify-between rounded-lg border bg-background p-2 shadow-sm">
+                  <div className="flex flex-wrap items-center gap-1">
+                    <span className="text-xs text-muted-foreground">Active filters</span>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={resetFilters} className="h-7 px-2 text-xs">
+                    <X className="mr-1 h-3 w-3" />
+                    Clear
                   </Button>
-                  <Button onClick={() => setFiltersOpen(false)}>Apply Filters</Button>
-                </SheetFooter>
-              </SheetContent>
-            </Sheet>
+                </div>
+              )}
+            </Card>
           </div>
 
           <section className="intro">
@@ -662,50 +701,18 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
                   />
                 </div>
 
-                {/* Product Name Search */}
+                {/* Product Name Multi-Select */}
                 <div className="space-y-2 col-span-1 md:col-span-2">
                   <label className="text-sm font-medium text-primary">Product Name</label>
-                  <Popover open={openProductSearch} onOpenChange={setOpenProductSearch}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={openProductSearch}
-                        className="w-full justify-between"
-                      >
-                        {productNameSearch
-                          ? productNames.find((name) => name.toLowerCase().includes(productNameSearch.toLowerCase())) ||
-                            "Search products..."
-                          : "Search products..."}
-                        <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-full p-0" align="start">
-                      <Command>
-                        <CommandInput placeholder="Search product name..." className="h-9" />
-                        <CommandList>
-                          <CommandEmpty>No product found.</CommandEmpty>
-                          <CommandGroup>
-                            {productNames.map((name) => (
-                              <CommandItem
-                                key={name}
-                                value={name}
-                                onSelect={(currentValue) => {
-                                  setProductNameSearch(currentValue)
-                                  setOpenProductSearch(false)
-                                }}
-                              >
-                                {name}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                  <MultiSelect
+                    options={productNames.map((name) => ({ label: name, value: name }))}
+                    selected={selectedProductNames}
+                    onChange={setSelectedProductNames}
+                    placeholder="Select product names..."
+                  />
                 </div>
 
-                {/* Discount Input Box (replacing dropdown) */}
+                {/* Discount Input Box */}
                 <div className="space-y-2 col-span-1 md:col-span-2 lg:col-span-4">
                   <label className="text-sm font-medium text-primary">Discount (%)</label>
                   <div className="flex items-center gap-4">
@@ -744,9 +751,9 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
                       {discount}% Discount
                     </span>
                   ) : null}
-                  {productNameSearch ? (
+                  {selectedProductNames.length > 0 ? (
                     <span className="rounded-full bg-blue-500 px-2 py-1 text-xs font-medium text-white">
-                      "{productNameSearch}"
+                      {selectedProductNames.length} Products
                     </span>
                   ) : null}
                 </div>
