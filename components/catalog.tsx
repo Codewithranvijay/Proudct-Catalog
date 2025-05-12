@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
-import { Download, X, Loader2, Percent, Filter, SlidersHorizontal } from "lucide-react"
+import { Download, X, Loader2, Percent, Filter, SlidersHorizontal, ArrowDownAZ, ArrowUpZA } from "lucide-react"
 import Image from "next/image"
 import { ProductTable } from "./product-table"
 import { PriceFilter } from "./price-filter"
@@ -28,6 +28,9 @@ interface CatalogProps {
   isAdmin: boolean
 }
 
+type SortType = "rank" | "price"
+type SortOrder = "asc" | "desc"
+
 export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
   const { toast } = useToast()
   const isMobile = useMobile()
@@ -45,7 +48,8 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
   const [selectedProductNames, setSelectedProductNames] = useState<string[]>([])
   const [discount, setDiscount] = useState(0)
   const [clientName, setClientName] = useState("")
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
+  const [sortType, setSortType] = useState<SortType>("rank") // Default to rank sorting
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc") // Default to highest first for ranking
   const [showIntro, setShowIntro] = useState(true)
   const [contentLoaded, setContentLoaded] = useState(false)
   const [productNames, setProductNames] = useState<string[]>([])
@@ -78,7 +82,16 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
 
   useEffect(() => {
     filterProducts()
-  }, [products, selectedCategories, selectedThemes, selectedOccasions, selectedProductNames, priceRange, sortOrder])
+  }, [
+    products,
+    selectedCategories,
+    selectedThemes,
+    selectedOccasions,
+    selectedProductNames,
+    priceRange,
+    sortType,
+    sortOrder,
+  ])
 
   const loadProducts = async () => {
     setLoading(true)
@@ -146,12 +159,21 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
       )
     }
 
-    // Sort by price
-    filtered.sort((a, b) => {
-      const priceA = Number.parseFloat(a.rate) || 0
-      const priceB = Number.parseFloat(b.rate) || 0
-      return sortOrder === "asc" ? priceA - priceB : priceB - priceA
-    })
+    // Sort by selected sort type and order
+    if (sortType === "rank") {
+      filtered.sort((a, b) => {
+        const rankA = a.ranking || 0
+        const rankB = b.ranking || 0
+        return sortOrder === "desc" ? rankB - rankA : rankA - rankB
+      })
+    } else {
+      // Sort by price
+      filtered.sort((a, b) => {
+        const priceA = Number.parseFloat(a.rate) || 0
+        const priceB = Number.parseFloat(b.rate) || 0
+        return sortOrder === "asc" ? priceA - priceB : priceB - priceA
+      })
+    }
 
     // Limit to 30 products for performance
     setFilteredProducts(filtered.slice(0, 30))
@@ -164,8 +186,25 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
     setSelectedOccasions([])
     setSelectedProductNames([])
     setDiscount(0)
-    setSortOrder("asc")
+    setSortType("rank")
+    setSortOrder("desc")
     setClientName("") // Clear client name when resetting filters
+  }
+
+  // Toggle sort order
+  const toggleSortOrder = () => {
+    setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+  }
+
+  // Toggle sort type
+  const toggleSortType = () => {
+    if (sortType === "rank") {
+      setSortType("price")
+      setSortOrder("asc") // Default to low to high for price
+    } else {
+      setSortType("rank")
+      setSortOrder("desc") // Default to high to low for ranking
+    }
   }
 
   // Handle discount input change
@@ -274,6 +313,14 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
     return priceRange[0] === chip.min && priceRange[1] === chip.max
   }
 
+  // Get sort button text based on current sort settings
+  const getSortButtonText = () => {
+    if (sortType === "price") {
+      return sortOrder === "asc" ? "Price: Low to High" : "Price: High to Low"
+    }
+    return "" // No text for ranking sort (hidden from users)
+  }
+
   return (
     <>
       {/* Intro Animation */}
@@ -380,6 +427,33 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
               ) : (
                 <span className="text-xs">Expanded</span>
               )}
+            </Button>
+
+            {/* Mobile Sort Button - Only show for price sorting */}
+            {sortType === "price" && (
+              <Button
+                variant="outline"
+                className="flex items-center gap-1"
+                onClick={toggleSortOrder}
+                aria-label={sortOrder === "asc" ? "Sort price high to low" : "Sort price low to high"}
+              >
+                {sortOrder === "asc" ? (
+                  <>
+                    <ArrowUpZA className="h-4 w-4" />
+                    <span className="sr-only md:not-sr-only md:inline-block text-xs">Low to High</span>
+                  </>
+                ) : (
+                  <>
+                    <ArrowDownAZ className="h-4 w-4" />
+                    <span className="sr-only md:not-sr-only md:inline-block text-xs">High to Low</span>
+                  </>
+                )}
+              </Button>
+            )}
+
+            {/* Toggle between rank and price sorting */}
+            <Button variant="outline" className="flex items-center gap-1" onClick={toggleSortType}>
+              <span className="text-xs">{sortType === "rank" ? "Price Sort" : "Default Sort"}</span>
             </Button>
           </div>
 
@@ -715,8 +789,8 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
                   />
                 </div>
 
-                {/* Discount Input Box */}
-                <div className="space-y-2 col-span-1 md:col-span-2 lg:col-span-4">
+                {/* Discount Input Box and Sort Toggle */}
+                <div className="space-y-2 col-span-1 md:col-span-2 lg:col-span-3">
                   <label className="text-sm font-medium text-primary">Discount (%)</label>
                   <div className="flex items-center gap-4">
                     <Input
@@ -732,6 +806,27 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
                       <Percent className="h-4 w-4 text-muted-foreground" />
                     </div>
                   </div>
+                </div>
+
+                {/* Sort Toggle Button */}
+                <div className="space-y-2 col-span-1 md:col-span-2 lg:col-span-1">
+                  <label className="text-sm font-medium text-primary">Sort By</label>
+                  <Button variant="outline" className="w-full justify-between" onClick={toggleSortType}>
+                    <span>{sortType === "rank" ? "Default Sort" : getSortButtonText()}</span>
+                    {sortType === "price" && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          toggleSortOrder()
+                        }}
+                      >
+                        {sortOrder === "asc" ? <ArrowUpZA className="h-4 w-4" /> : <ArrowDownAZ className="h-4 w-4" />}
+                      </Button>
+                    )}
+                  </Button>
                 </div>
               </div>
             </Card>
