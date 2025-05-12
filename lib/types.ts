@@ -10,4 +10,5 @@ export interface Product {
   budget: string
   allFilter: string
   productCategory: string
+  ranking: number // Added ranking field
 }

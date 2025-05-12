@@ -60,6 +60,10 @@ export async function GET() {
       let description = row[7] || ""
       description = description.replace(/\n/g, "<br>") // Replace newlines with <br>
 
+      // Get ranking from column N (index 13)
+      const rankingValue = row[13] || "0"
+      const ranking = Number.parseFloat(rankingValue) || 0
+
       const product: Product = {
         occasion: row[1] || "",
         industry: row[2] || "",
@@ -72,6 +76,7 @@ export async function GET() {
         budget: row[9] || "0",
         allFilter: row[10] || "",
         productCategory: row[11] || "",
+        ranking: ranking, // Add ranking field
       }
 
       products.push(product)

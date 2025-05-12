@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
-import { Download, X, Loader2, Percent, Filter, SlidersHorizontal } from "lucide-react"
+import { Download, X, Loader2, Percent, Filter, SlidersHorizontal, ArrowDownAZ, ArrowUpZA, Star } from "lucide-react"
 import Image from "next/image"
 import { ProductTable } from "./product-table"
 import { PriceFilter } from "./price-filter"
@@ -22,11 +22,15 @@ import { UserMenu } from "./user-menu"
 import { LoginHistory } from "./login-history"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Slider } from "@/components/ui/slider"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 
 interface CatalogProps {
   userEmail: string
   isAdmin: boolean
 }
+
+type SortType = "rank" | "price"
+type SortOrder = "asc" | "desc"
 
 export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
   const { toast } = useToast()
@@ -45,7 +49,8 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
   const [selectedProductNames, setSelectedProductNames] = useState<string[]>([])
   const [discount, setDiscount] = useState(0)
   const [clientName, setClientName] = useState("")
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
+  const [sortType, setSortType] = useState<SortType>("rank") // Default to rank sorting
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc") // Default to highest first for ranking
   const [showIntro, setShowIntro] = useState(true)
   const [contentLoaded, setContentLoaded] = useState(false)
   const [productNames, setProductNames] = useState<string[]>([])
@@ -78,7 +83,16 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
 
   useEffect(() => {
     filterProducts()
-  }, [products, selectedCategories, selectedThemes, selectedOccasions, selectedProductNames, priceRange, sortOrder])
+  }, [
+    products,
+    selectedCategories,
+    selectedThemes,
+    selectedOccasions,
+    selectedProductNames,
+    priceRange,
+    sortType,
+    sortOrder,
+  ])
 
   const loadProducts = async () => {
     setLoading(true)
@@ -146,12 +160,21 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
       )
     }
 
-    // Sort by price
-    filtered.sort((a, b) => {
-      const priceA = Number.parseFloat(a.rate) || 0
-      const priceB = Number.parseFloat(b.rate) || 0
-      return sortOrder === "asc" ? priceA - priceB : priceB - priceA
-    })
+    // Sort by selected sort type and order
+    if (sortType === "rank") {
+      filtered.sort((a, b) => {
+        const rankA = a.ranking || 0
+        const rankB = b.ranking || 0
+        return sortOrder === "desc" ? rankB - rankA : rankA - rankB
+      })
+    } else {
+      // Sort by price
+      filtered.sort((a, b) => {
+        const priceA = Number.parseFloat(a.rate) || 0
+        const priceB = Number.parseFloat(b.rate) || 0
+        return sortOrder === "asc" ? priceA - priceB : priceB - priceA
+      })
+    }
 
     // Limit to 30 products for performance
     setFilteredProducts(filtered.slice(0, 30))
@@ -164,8 +187,14 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
     setSelectedOccasions([])
     setSelectedProductNames([])
     setDiscount(0)
-    setSortOrder("asc")
+    setSortType("rank")
+    setSortOrder("desc")
     setClientName("") // Clear client name when resetting filters
+  }
+
+  // Toggle sort order
+  const toggleSortOrder = () => {
+    setSortOrder(sortOrder === "asc" ? "desc" : "asc")
   }
 
   // Handle discount input change
@@ -272,6 +301,24 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
 
   const isChipActive = (chip: { min: number; max: number }) => {
     return priceRange[0] === chip.min && priceRange[1] === chip.max
+  }
+
+  // Get sort button text based on current sort settings
+  const getSortButtonText = () => {
+    if (sortType === "rank") {
+      return sortOrder === "desc" ? "Ranking: High to Low" : "Ranking: Low to High"
+    } else {
+      return sortOrder === "asc" ? "Price: Low to High" : "Price: High to Low"
+    }
+  }
+
+  // Get sort button icon based on current sort settings
+  const getSortButtonIcon = () => {
+    if (sortOrder === "desc") {
+      return <ArrowDownAZ className="h-4 w-4" />
+    } else {
+      return <ArrowUpZA className="h-4 w-4" />
+    }
   }
 
   return (
@@ -381,6 +428,58 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
                 <span className="text-xs">Expanded</span>
               )}
             </Button>
+
+            {/* Mobile Sort Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-1">
+                  {sortType === "rank" ? <Star className="h-4 w-4" /> : getSortButtonIcon()}
+                  <span className="sr-only md:not-sr-only text-xs">Sort</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => {
+                    setSortType("rank")
+                    setSortOrder("desc")
+                  }}
+                  className={cn(sortType === "rank" && sortOrder === "desc" && "bg-accent")}
+                >
+                  <Star className="mr-2 h-4 w-4" />
+                  <span>Ranking: High to Low</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setSortType("rank")
+                    setSortOrder("asc")
+                  }}
+                  className={cn(sortType === "rank" && sortOrder === "asc" && "bg-accent")}
+                >
+                  <Star className="mr-2 h-4 w-4" />
+                  <span>Ranking: Low to High</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setSortType("price")
+                    setSortOrder("asc")
+                  }}
+                  className={cn(sortType === "price" && sortOrder === "asc" && "bg-accent")}
+                >
+                  <ArrowUpZA className="mr-2 h-4 w-4" />
+                  <span>Price: Low to High</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setSortType("price")
+                    setSortOrder("desc")
+                  }}
+                  className={cn(sortType === "price" && sortOrder === "desc" && "bg-accent")}
+                >
+                  <ArrowDownAZ className="mr-2 h-4 w-4" />
+                  <span>Price: High to Low</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           {/* Mobile Price Filter */}
@@ -738,7 +837,61 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
           </section>
 
           <div className="no-print filter-controls hidden md:block">
-            <PriceFilter value={priceRange} onChange={setPriceRange} onReset={resetFilters} />
+            <div className="flex justify-between items-center mb-4">
+              <PriceFilter value={priceRange} onChange={setPriceRange} onReset={resetFilters} />
+
+              {/* Desktop Sort Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2 h-10">
+                    {sortType === "rank" ? <Star className="h-4 w-4" /> : getSortButtonIcon()}
+                    <span>{getSortButtonText()}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setSortType("rank")
+                      setSortOrder("desc")
+                    }}
+                    className={cn(sortType === "rank" && sortOrder === "desc" && "bg-accent")}
+                  >
+                    <Star className="mr-2 h-4 w-4" />
+                    <span>Ranking: High to Low</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setSortType("rank")
+                      setSortOrder("asc")
+                    }}
+                    className={cn(sortType === "rank" && sortOrder === "asc" && "bg-accent")}
+                  >
+                    <Star className="mr-2 h-4 w-4" />
+                    <span>Ranking: Low to High</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setSortType("price")
+                      setSortOrder("asc")
+                    }}
+                    className={cn(sortType === "price" && sortOrder === "asc" && "bg-accent")}
+                  >
+                    <ArrowUpZA className="mr-2 h-4 w-4" />
+                    <span>Price: Low to High</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => {
+                      setSortType("price")
+                      setSortOrder("desc")
+                    }}
+                    className={cn(sortType === "price" && sortOrder === "desc" && "bg-accent")}
+                  >
+                    <ArrowDownAZ className="mr-2 h-4 w-4" />
+                    <span>Price: High to Low</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
 
             {areFiltersActive() && (
               <div className="mb-4 md:mb-6 flex items-center justify-between rounded-lg border bg-background p-2 md:p-3 shadow-sm">
