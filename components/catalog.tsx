@@ -57,6 +57,8 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
   const contentRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
   const clientInfoRef = useRef<HTMLDivElement>(null)
+  const [customTypes, setCustomTypes] = useState<string[]>([])
+  const [selectedCustomTypes, setSelectedCustomTypes] = useState<string[]>([])
 
   useEffect(() => {
     // Hide content until intro animation completes
@@ -88,6 +90,7 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
     selectedThemes,
     selectedOccasions,
     selectedProductNames,
+    selectedCustomTypes,
     priceRange,
     sortType,
     sortOrder,
@@ -107,11 +110,13 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
       const uniqueThemes = [...new Set(data.map((p) => p.theme).filter(Boolean))]
       const uniqueOccasions = [...new Set(data.map((p) => p.occasion).filter(Boolean))]
       const uniqueProductNames = [...new Set(data.map((p) => p.productName).filter(Boolean))]
+      const uniqueCustomTypes = [...new Set(data.map((p) => p.customType).filter(Boolean))]
 
       setCategories(uniqueCategories)
       setThemes(uniqueThemes)
       setOccasions(uniqueOccasions)
       setProductNames(uniqueProductNames)
+      setCustomTypes(uniqueCustomTypes)
       setFilteredProducts(data)
       setContentLoaded(true)
     } catch (error) {
@@ -159,6 +164,11 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
       )
     }
 
+    // Filter by selected custom types
+    if (selectedCustomTypes.length > 0) {
+      filtered = filtered.filter((product) => selectedCustomTypes.includes(product.customType))
+    }
+
     // Sort by selected sort type and order
     if (sortType === "rank") {
       filtered.sort((a, b) => {
@@ -185,6 +195,7 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
     setSelectedThemes([])
     setSelectedOccasions([])
     setSelectedProductNames([])
+    setSelectedCustomTypes([])
     setDiscount(0)
     setSortType("rank")
     setSortOrder("desc")
@@ -293,6 +304,7 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
       selectedThemes.length > 0 ||
       selectedOccasions.length > 0 ||
       selectedProductNames.length > 0 ||
+      selectedCustomTypes.length > 0 ||
       discount > 0 ||
       priceRange[0] !== 0 ||
       priceRange[1] !== 5000
@@ -633,6 +645,22 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
                       </div>
                     </AccordionContent>
                   </AccordionItem>
+
+                  <AccordionItem value="custom-type">
+                    <AccordionTrigger className="text-sm py-2">Custom</AccordionTrigger>
+                    <AccordionContent>
+                      <div className="z-10">
+                        <MultiSelect
+                          options={customTypes.map((type) => ({ label: type, value: type }))}
+                          selected={selectedCustomTypes}
+                          onChange={setSelectedCustomTypes}
+                          placeholder="Select custom types..."
+                          id="mobile-custom-select"
+                          className="w-full"
+                        />
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
                 </Accordion>
               ) : (
                 <div className="space-y-4">
@@ -709,6 +737,18 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
                         <Percent className="h-4 w-4 text-muted-foreground" />
                       </div>
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-primary">Custom</label>
+                    <MultiSelect
+                      options={customTypes.map((type) => ({ label: type, value: type }))}
+                      selected={selectedCustomTypes}
+                      onChange={setSelectedCustomTypes}
+                      placeholder="Select custom types..."
+                      id="mobile-custom-select-expanded"
+                      className="w-full"
+                    />
                   </div>
                 </div>
               )}
@@ -789,6 +829,17 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
                   />
                 </div>
 
+                {/* Custom Filter */}
+                <div className="space-y-2 col-span-1 md:col-span-2">
+                  <label className="text-sm font-medium text-primary">Custom</label>
+                  <MultiSelect
+                    options={customTypes.map((type) => ({ label: type, value: type }))}
+                    selected={selectedCustomTypes}
+                    onChange={setSelectedCustomTypes}
+                    placeholder="Select custom types..."
+                  />
+                </div>
+
                 {/* Discount Input Box and Sort Toggle */}
                 <div className="space-y-2 col-span-1 md:col-span-2 lg:col-span-3">
                   <label className="text-sm font-medium text-primary">Discount (%)</label>
@@ -852,6 +903,11 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
                   {selectedProductNames.length > 0 ? (
                     <span className="rounded-full bg-blue-500 px-2 py-1 text-xs font-medium text-white">
                       {selectedProductNames.length} Products
+                    </span>
+                  ) : null}
+                  {selectedCustomTypes.length > 0 ? (
+                    <span className="rounded-full bg-purple-500 px-2 py-1 text-xs font-medium text-white">
+                      {selectedCustomTypes.length} Custom
                     </span>
                   ) : null}
                 </div>

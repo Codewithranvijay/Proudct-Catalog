@@ -66,17 +66,18 @@ export async function GET() {
 
       const product: Product = {
         occasion: row[1] || "",
-        industry: row[2] || "",
-        theme: row[3] || "",
-        subCategory: row[4] || "",
-        productName: row[5] || "",
-        image: imageUrl,
-        description: description,
-        rate: row[8] || "0",
-        budget: row[9] || "0",
-        allFilter: row[10] || "",
-        productCategory: row[11] || "",
-        ranking: ranking, // Add ranking field
+        customType: row[2] || "", // Column C - Custom filter
+        industry: row[3] || "", // Shift other fields accordingly
+        theme: row[4] || "",
+        subCategory: row[5] || "",
+        productName: row[6] || "",
+        image: convertDriveLink(row[7] || ""), // Update image column
+        description: (row[8] || "").replace(/\n/g, "<br>"), // Update description column
+        rate: row[9] || "0", // Update rate column
+        budget: row[10] || "0", // Update budget column
+        allFilter: row[11] || "", // Update allFilter column
+        productCategory: row[12] || "", // Update productCategory column
+        ranking: Number.parseFloat(row[14] || "0") || 0, // Update ranking column (O)
       }
 
       products.push(product)
