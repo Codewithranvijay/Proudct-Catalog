@@ -11,5 +11,4 @@ export interface Product {
   allFilter: string
   productCategory: string
   ranking: number // Added ranking field (not displayed to users)
-  customizationType: string // Add new field for column C
 }
