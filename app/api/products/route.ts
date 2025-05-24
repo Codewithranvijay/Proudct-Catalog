@@ -65,19 +65,19 @@ export async function GET() {
       const ranking = Number.parseFloat(rankingValue) || 0
 
       const product: Product = {
-        occasion: row[1] || "",
-        customType: row[2] || "", // Column C - Custom filter
-        industry: row[3] || "", // Shift other fields accordingly
-        theme: row[4] || "",
-        subCategory: row[5] || "",
-        productName: row[6] || "",
-        image: convertDriveLink(row[7] || ""), // Update image column
-        description: (row[8] || "").replace(/\n/g, "<br>"), // Update description column
-        rate: row[9] || "0", // Update rate column
-        budget: row[10] || "0", // Update budget column
-        allFilter: row[11] || "", // Update allFilter column
-        productCategory: row[12] || "", // Update productCategory column
-        ranking: Number.parseFloat(row[14] || "0") || 0, // Update ranking column (O)
+        occasion: row[1] || "", // Column B
+        customType: row[2] || "", // Column C - Custom filter (NEW)
+        industry: row[2] || "", // Column C (keeping original for compatibility)
+        theme: row[3] || "", // Column D
+        subCategory: row[4] || "", // Column E
+        productName: row[5] || "", // Column F
+        image: convertDriveLink(row[6] || ""), // Column G
+        description: (row[7] || "").replace(/\n/g, "<br>"), // Column H
+        rate: row[8] || "0", // Column I
+        budget: row[9] || "0", // Column J
+        allFilter: row[10] || "", // Column K
+        productCategory: row[11] || "", // Column L
+        ranking: Number.parseFloat(row[13] || "0") || 0, // Column N
       }
 
       products.push(product)
