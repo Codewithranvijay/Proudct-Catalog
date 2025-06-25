@@ -40,7 +40,8 @@ export function ProductTable({
     const originalPrice = Number.parseFloat(price) || 0
     if (discount <= 0) return { original: originalPrice, discounted: null }
 
-    const discountedPrice = originalPrice * (1 - discount / 100)
+    const discountAmount = originalPrice * (discount / 100)
+    const discountedPrice = originalPrice - discountAmount
     return { original: originalPrice, discounted: discountedPrice }
   }
 
@@ -68,7 +69,6 @@ export function ProductTable({
         <div className="pdf-client-info">
           {clientName && <p className="font-medium">Client: {clientName}</p>}
           <p>Date: {new Date().toLocaleDateString()}</p>
-          {discount > 0 && <p className="text-green-600 font-medium">Discount Applied: {discount}%</p>}
         </div>
 
         {/* PDF download button */}
@@ -97,12 +97,6 @@ export function ProductTable({
                     <>
                       <span className="mx-1 md:mx-2">•</span>
                       <span className="font-medium">Occasion:</span> {product.occasion}
-                    </>
-                  )}
-                  {product.customType && (
-                    <>
-                      <span className="mx-1 md:mx-2">•</span>
-                      <span className="font-medium">Type:</span> {product.customType}
                     </>
                   )}
                 </div>
@@ -168,18 +162,13 @@ export function ProductTable({
                     <>
                       <div className="flex items-center justify-center gap-1 md:gap-2">
                         <span className="line-through text-gray-500 text-xs md:text-sm">
-                          MRP: ₹{priceInfo.original.toFixed(2)}
+                          ₹{priceInfo.original.toFixed(2)}
                         </span>
-                      </div>
-                      <div className="flex items-center justify-center gap-1 md:gap-2">
-                        <span className="text-green-600 text-sm md:text-base font-bold">
-                          ₹{priceInfo.discounted.toFixed(2)}
-                        </span>
+                        <span className="text-green-600 text-xs md:text-sm">₹{priceInfo.discounted.toFixed(2)}</span>
                       </div>
                       <span className="block text-[10px] md:text-xs text-green-600">
-                        {discount}% OFF • Save ₹{(priceInfo.original - priceInfo.discounted).toFixed(2)}
+                        {discount}% Discount Applied + GST
                       </span>
-                      <span className="block text-[10px] md:text-xs text-muted-foreground">+ GST</span>
                     </>
                   ) : (
                     <>
