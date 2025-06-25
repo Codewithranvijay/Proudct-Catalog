@@ -4,15 +4,36 @@ import type { Product } from "@/lib/types"
 // Function to convert Google Drive links to direct image URLs
 function convertDriveLink(url: string): string {
   if (!url || typeof url !== "string") {
-    return "https://via.placeholder.com/300"
+    return "/placeholder.png?height=300&width=300"
   }
 
-  const match = url.match(/(?:\/d\/|id=)([a-zA-Z0-9_-]+)/)
-  if (match) {
-    return `https://lh3.googleusercontent.com/d/${match[1]}=s600`
+  // Clean the URL first
+  const cleanUrl = url.trim()
+
+  // Handle different Google Drive URL formats
+  const patterns = [
+    /(?:\/d\/|id=)([a-zA-Z0-9_-]+)/,
+    /\/file\/d\/([a-zA-Z0-9_-]+)/,
+    /drive\.google\.com.*[?&]id=([a-zA-Z0-9_-]+)/,
+  ]
+
+  for (const pattern of patterns) {
+    const match = cleanUrl.match(pattern)
+    if (match && match[1]) {
+      return `https://lh3.googleusercontent.com/d/${match[1]}=s600`
+    }
   }
 
-  return url
+  // If it's already a direct image URL, return as is
+  if (
+    cleanUrl.startsWith("http") &&
+    (cleanUrl.includes("googleusercontent.com") || cleanUrl.includes("googleapis.com"))
+  ) {
+    return cleanUrl
+  }
+
+  // Fallback to placeholder
+  return "/placeholder.png?height=300&width=300"
 }
 
 export async function GET() {
@@ -65,19 +86,19 @@ export async function GET() {
       const ranking = Number.parseFloat(rankingValue) || 0
 
       const product: Product = {
-        occasion: row[1] || "", // Column B
-        customType: row[2] || "", // Column C - Custom filter (NEW)
-        industry: row[2] || "", // Column C (keeping original for compatibility)
-        theme: row[3] || "", // Column D
-        subCategory: row[4] || "", // Column E
-        productName: row[5] || "", // Column F
-        image: convertDriveLink(row[6] || ""), // Column G
-        description: (row[7] || "").replace(/\n/g, "<br>"), // Column H
-        rate: row[8] || "0", // Column I
-        budget: row[9] || "0", // Column J
-        allFilter: row[10] || "", // Column K
-        productCategory: row[11] || "", // Column L
-        ranking: Number.parseFloat(row[13] || "0") || 0, // Column N
+        occasion: row[1] || "",
+        customType: row[2] || "",
+        industry: row[2] || "",
+        theme: row[3] || "",
+        subCategory: row[4] || "",
+        productName: row[5] || "",
+        image: convertDriveLink(row[6] || ""),
+        description: (row[7] || "").replace(/\n/g, "<br>"),
+        rate: row[8] || "0",
+        budget: row[9] || "0",
+        allFilter: row[10] || "",
+        productCategory: row[11] || "",
+        ranking: Number.parseFloat(row[13] || "0") || 0,
       }
 
       products.push(product)

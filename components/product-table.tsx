@@ -104,14 +104,15 @@ export function ProductTable({
                 <div className="flex justify-center my-2 md:my-3 product-image">
                   <div className="relative group w-full">
                     <img
-                      src={product.image || "/placeholder.svg?height=200&width=300"}
+                      src={product.image || "/placeholder.png?height=200&width=300"}
                       alt={product.productName || "Product"}
                       className="h-[150px] md:h-[180px] w-full rounded-md border bg-background p-2 object-contain transition-transform hover:scale-105"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement
-                        target.src = "/placeholder.svg?height=200&width=300"
+                        target.src = "/placeholder.png?height=200&width=300"
                       }}
                       crossOrigin="anonymous"
+                      loading="lazy"
                     />
                     <Dialog>
                       <DialogTrigger asChild>
@@ -128,14 +129,15 @@ export function ProductTable({
                         <DialogTitle>{product.productName || "Product Image"}</DialogTitle>
                         <div className="flex justify-center p-4">
                           <img
-                            src={product.image || "/placeholder.svg?height=600&width=600"}
+                            src={product.image || "/placeholder.png?height=600&width=600"}
                             alt={product.productName || "Product"}
                             className="max-h-[70vh] object-contain"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement
-                              target.src = "/placeholder.svg?height=600&width=600"
+                              target.src = "/placeholder.png?height=600&width=600"
                             }}
                             crossOrigin="anonymous"
+                            loading="lazy"
                           />
                         </div>
                       </DialogContent>

@@ -27,15 +27,30 @@ export async function fetchProducts(): Promise<Product[]> {
 // Function to convert Google Drive links to direct image URLs
 export function convertDriveLink(url: string): string {
   if (!url || typeof url !== "string") {
-    return "https://via.placeholder.com/300"
+    return "/placeholder.png?height=300&width=300"
   }
 
-  const match = url.match(/(?:\/d\/|id=)([a-zA-Z0-9_-]+)/)
-  if (match) {
-    return `https://lh3.googleusercontent.com/d/${match[1]}=s600`
+  // Handle different Google Drive URL formats
+  const patterns = [
+    /(?:\/d\/|id=)([a-zA-Z0-9_-]+)/,
+    /\/file\/d\/([a-zA-Z0-9_-]+)/,
+    /drive\.google\.com.*[?&]id=([a-zA-Z0-9_-]+)/,
+  ]
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern)
+    if (match && match[1]) {
+      return `https://lh3.googleusercontent.com/d/${match[1]}=s600`
+    }
   }
 
-  return url
+  // If it's already a direct image URL, return as is
+  if (url.startsWith("http") && (url.includes("googleusercontent.com") || url.includes("googleapis.com"))) {
+    return url
+  }
+
+  // Fallback to placeholder
+  return "/placeholder.png?height=300&width=300"
 }
 
 // Function to preload images to avoid loading issues
