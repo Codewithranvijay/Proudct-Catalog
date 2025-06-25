@@ -1,7 +1,5 @@
 "use client"
 
-import type React from "react"
-
 import { useEffect, useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -92,6 +90,7 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
     selectedProductNames,
     selectedCustomTypes,
     priceRange,
+    discount,
     sortType,
     sortOrder,
   ])
@@ -136,10 +135,27 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
 
     let filtered = [...products]
 
-    // Filter by price range
+    // Dynamic price filtering with reverse discount calculation
     filtered = filtered.filter((product) => {
-      const price = Number.parseFloat(product.rate) || 0
-      return price >= priceRange[0] && price <= priceRange[1]
+      const originalPrice = Number.parseFloat(product.rate) || 0
+
+      // Calculate final price after discount
+      const finalPrice = originalPrice * (1 - discount / 100)
+
+      // For reverse calculation: if user wants final price range [min, max]
+      // and discount is applied, we need to find products where:
+      // originalPrice >= min / (1 - discount) AND originalPrice <= max / (1 - discount)
+
+      if (discount > 0) {
+        // Reverse discount calculation
+        const adjustedMin = priceRange[0] / (1 - discount / 100)
+        const adjustedMax = priceRange[1] / (1 - discount / 100)
+
+        return originalPrice >= adjustedMin && originalPrice <= adjustedMax
+      } else {
+        // No discount, filter by original price
+        return originalPrice >= priceRange[0] && originalPrice <= priceRange[1]
+      }
     })
 
     // Filter by selected categories
@@ -177,10 +193,10 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
         return sortOrder === "desc" ? rankB - rankA : rankA - rankB
       })
     } else {
-      // Sort by price
+      // Sort by final price (after discount)
       filtered.sort((a, b) => {
-        const priceA = Number.parseFloat(a.rate) || 0
-        const priceB = Number.parseFloat(b.rate) || 0
+        const priceA = (Number.parseFloat(a.rate) || 0) * (1 - discount / 100)
+        const priceB = (Number.parseFloat(b.rate) || 0) * (1 - discount / 100)
         return sortOrder === "asc" ? priceA - priceB : priceB - priceA
       })
     }
@@ -219,14 +235,8 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
   }
 
   // Handle discount input change
-  const handleDiscountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = Number.parseInt(e.target.value, 10)
-    if (isNaN(value)) {
-      setDiscount(0)
-    } else {
-      // Limit discount to 0-30 range
-      setDiscount(Math.min(30, Math.max(0, value)))
-    }
+  const handleDiscountChange = (value: number) => {
+    setDiscount(Math.min(50, Math.max(0, value)))
   }
 
   // Handle slider change
@@ -475,12 +485,29 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2 text-primary">
                   <Filter className="h-5 w-5" />
-                  <h3 className="font-medium">Price Filter</h3>
+                  <h3 className="font-medium">Dynamic Price Filter</h3>
                 </div>
                 <Button variant="outline" size="sm" onClick={resetFilters} className="h-8 px-3 text-xs">
                   <X className="mr-1 h-3 w-3" />
                   Reset
                 </Button>
+              </div>
+
+              {/* Mobile Discount Selection */}
+              <div className="mb-4">
+                <h4 className="mb-2 text-sm font-medium">Discount %</h4>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={0}
+                    max={50}
+                    value={discount}
+                    onChange={(e) => handleDiscountChange(Number.parseInt(e.target.value) || 0)}
+                    className="w-20"
+                    placeholder="0"
+                  />
+                  <Percent className="h-4 w-4 text-muted-foreground" />
+                </div>
               </div>
 
               <div className="mb-4 flex flex-wrap gap-2">
@@ -626,26 +653,6 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
                     </AccordionContent>
                   </AccordionItem>
 
-                  <AccordionItem value="discount">
-                    <AccordionTrigger className="text-sm py-2">Discount (%)</AccordionTrigger>
-                    <AccordionContent>
-                      <div className="flex items-center gap-4">
-                        <Input
-                          type="number"
-                          min={0}
-                          max={30}
-                          value={discount}
-                          onChange={handleDiscountChange}
-                          className="w-full"
-                          placeholder="Enter discount percentage (0-30)"
-                        />
-                        <div className="flex h-9 w-9 items-center justify-center rounded-md border bg-background">
-                          <Percent className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-
                   <AccordionItem value="custom-type">
                     <AccordionTrigger className="text-sm py-2">Custom</AccordionTrigger>
                     <AccordionContent>
@@ -722,24 +729,6 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-sm font-medium text-primary">Discount (%)</label>
-                    <div className="flex items-center gap-4">
-                      <Input
-                        type="number"
-                        min={0}
-                        max={30}
-                        value={discount}
-                        onChange={handleDiscountChange}
-                        className="w-full"
-                        placeholder="Enter discount percentage (0-30)"
-                      />
-                      <div className="flex h-9 w-9 items-center justify-center rounded-md border bg-background">
-                        <Percent className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
                     <label className="text-sm font-medium text-primary">Custom</label>
                     <MultiSelect
                       options={customTypes.map((type) => ({ label: type, value: type }))}
@@ -793,6 +782,7 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
                   <label className="text-sm font-medium text-primary">Price Range</label>
                   <div className="rounded-md border bg-muted/40 p-2 text-sm">
                     ₹{priceRange[0]} - ₹{priceRange[1]}
+                    {discount > 0 && <div className="text-xs text-muted-foreground">After {discount}% discount</div>}
                   </div>
                 </div>
 
@@ -840,25 +830,6 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
                   />
                 </div>
 
-                {/* Discount Input Box and Sort Toggle */}
-                <div className="space-y-2 col-span-1 md:col-span-2 lg:col-span-3">
-                  <label className="text-sm font-medium text-primary">Discount (%)</label>
-                  <div className="flex items-center gap-4">
-                    <Input
-                      type="number"
-                      min={0}
-                      max={30}
-                      value={discount}
-                      onChange={handleDiscountChange}
-                      className="w-full"
-                      placeholder="Enter discount percentage (0-30)"
-                    />
-                    <div className="flex h-9 w-9 items-center justify-center rounded-md border bg-background">
-                      <Percent className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </div>
-                </div>
-
                 {/* Sort Toggle Button */}
                 <div className="space-y-2 col-span-1 md:col-span-2 lg:col-span-1">
                   <label className="text-sm font-medium text-primary">Sort By</label>
@@ -884,7 +855,13 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
           </section>
 
           <div className="no-print filter-controls hidden md:block">
-            <PriceFilter value={priceRange} onChange={setPriceRange} onReset={resetFilters} />
+            <PriceFilter
+              value={priceRange}
+              onChange={setPriceRange}
+              onReset={resetFilters}
+              discount={discount}
+              onDiscountChange={handleDiscountChange}
+            />
 
             {areFiltersActive() && (
               <div className="mb-4 md:mb-6 flex items-center justify-between rounded-lg border bg-background p-2 md:p-3 shadow-sm">
@@ -893,13 +870,14 @@ export default function Catalog({ userEmail, isAdmin }: CatalogProps) {
                   {priceRange[0] !== 0 || priceRange[1] !== 5000 ? (
                     <span className="rounded-full bg-primary px-2 py-1 text-xs font-medium text-primary-foreground">
                       ₹{priceRange[0]} - ₹{priceRange[1]}
+                      {discount > 0 && ` (${discount}% off)`}
                     </span>
                   ) : null}
-                  {discount > 0 ? (
+                  {discount > 0 && (
                     <span className="rounded-full bg-green-500 px-2 py-1 text-xs font-medium text-white">
                       {discount}% Discount
                     </span>
-                  ) : null}
+                  )}
                   {selectedProductNames.length > 0 ? (
                     <span className="rounded-full bg-blue-500 px-2 py-1 text-xs font-medium text-white">
                       {selectedProductNames.length} Products
